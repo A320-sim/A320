@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>A320 MCDU - GitHub Edition</title>
+    <title>A320 MCDU</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=B612+Mono:wght@700&display=swap');
         :root { --amb: #ff9d00; --cyn: #00ffff; --grn: #00ff00; --wht: #ffffff; }
@@ -10,7 +10,9 @@
         #mcdu { width: 620px; background: #5b6a7a; padding: 25px; border-radius: 15px; border: 4px solid #444; margin-bottom: 20px; }
         #bezel { background: #080808; display: grid; grid-template-columns: 60px 1fr 60px; grid-template-rows: 45px repeat(6, 60px) 45px; padding: 10px; border-radius: 10px; }
         #screen-bg { grid-column: 2; grid-row: 1 / span 8; background: #000; border: 2px solid #333; height: 100%; z-index: 1; }
-        #title { grid-column: 2; grid-row: 1; text-align: center; color: white; z-index: 2; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        #title { grid-column: 2; grid-row: 1; text-align: center; color: white; z-index: 2; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        #live-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; flex-shrink: 0; }
+        #live-dot.connected { background: var(--grn); box-shadow: 0 0 6px var(--grn); }
         #scratchpad { grid-column: 2; grid-row: 8; color: white; z-index: 2; font-size: 20px; padding: 0 12px; display: flex; align-items: center; border-top: 1px solid #222; min-height: 45px; }
         .lsk { width: 48px; height: 32px; background: #222; border: 1px solid #000; cursor: pointer; border-radius: 4px; z-index: 2; justify-self: center; align-self: center; }
         .lsk:active { background: #444; }
@@ -25,13 +27,22 @@
         .arrow-pad { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 6px; }
         .num-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .alpha-pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-        #external-input { width: 620px; background: #333; padding: 15px; border-radius: 10px; border: 2px solid #555; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        #external-input .row { display: flex; gap: 10px; align-items: center; justify-content: center; width: 100%; }
-        #sb-id-input { background: #000; color: var(--grn); border: 1px solid #555; padding: 8px; font-family: 'B612 Mono'; width: 200px; outline: none; font-size: 14px; }
-        #sb-btn { background: #5b6a7a; color: white; border: none; padding: 10px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; font-family: 'B612 Mono'; }
-        #sb-btn:hover { background: #6e7f91; }
-        #sb-status { font-size: 12px; color: #aaa; text-align: center; }
-        .G { color: var(--grn); } .C { color: var(--cyn); } .A { color: var(--amb); } .W { color: var(--wht); }
+
+        /* External panels */
+        .panel { width: 620px; background: #2a2a2a; padding: 15px; border-radius: 10px; border: 2px solid #555; display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 12px; }
+        .panel-title { font-size: 11px; color: #888; letter-spacing: 2px; align-self: flex-start; }
+        .panel .row { display: flex; gap: 10px; align-items: center; justify-content: center; width: 100%; }
+        .panel input { background: #000; color: var(--grn); border: 1px solid #555; padding: 8px; font-family: 'B612 Mono'; outline: none; font-size: 14px; flex: 1; }
+        .panel-btn { background: #5b6a7a; color: white; border: none; padding: 10px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; font-family: 'B612 Mono'; white-space: nowrap; }
+        .panel-btn:hover { background: #6e7f91; }
+        .panel-btn.active { background: #1a6b1a; }
+        .status { font-size: 12px; color: #aaa; text-align: center; }
+
+        /* Live indicator strip */
+        #live-strip { width: 620px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11px; color: #555; margin-bottom: 4px; }
+        #live-strip.connected { color: var(--grn); }
+
+        .G { color: var(--grn); } .C { color: var(--cyn); } .A { color: var(--amb); } .W { color: var(--wht); } .X { color: #555; }
     </style>
 </head>
 <body>
@@ -39,26 +50,26 @@
 <div id="mcdu">
     <div id="bezel">
         <div id="screen-bg"></div>
-        <div id="title">MCDU MENU</div>
-        
-        <button class="lsk" onclick="pressLSK('L1')" style="grid-row: 2; grid-column: 1;"></button>
-        <div id="row1" class="data-cell" style="grid-row: 2;"></div>
-        <button class="lsk" onclick="pressLSK('R1')" style="grid-row: 2; grid-column: 3;"></button>
-        <button class="lsk" onclick="pressLSK('L2')" style="grid-row: 3; grid-column: 1;"></button>
-        <div id="row2" class="data-cell" style="grid-row: 3;"></div>
-        <button class="lsk" onclick="pressLSK('R2')" style="grid-row: 3; grid-column: 3;"></button>
-        <button class="lsk" onclick="pressLSK('L3')" style="grid-row: 4; grid-column: 1;"></button>
-        <div id="row3" class="data-cell" style="grid-row: 4;"></div>
-        <button class="lsk" onclick="pressLSK('R3')" style="grid-row: 4; grid-column: 3;"></button>
-        <button class="lsk" onclick="pressLSK('L4')" style="grid-row: 5; grid-column: 1;"></button>
-        <div id="row4" class="data-cell" style="grid-row: 5;"></div>
-        <button class="lsk" onclick="pressLSK('R4')" style="grid-row: 5; grid-column: 3;"></button>
-        <button class="lsk" onclick="pressLSK('L5')" style="grid-row: 6; grid-column: 1;"></button>
-        <div id="row5" class="data-cell" style="grid-row: 6;"></div>
-        <button class="lsk" onclick="pressLSK('R5')" style="grid-row: 6; grid-column: 3;"></button>
-        <button class="lsk" onclick="pressLSK('L6')" style="grid-row: 7; grid-column: 1;"></button>
-        <div id="row6" class="data-cell" style="grid-row: 7;"></div>
-        <button class="lsk" onclick="pressLSK('R6')" style="grid-row: 7; grid-column: 3;"></button>
+        <div id="title"><span id="live-dot"></span><span id="title-text">MCDU MENU</span></div>
+
+        <button class="lsk" onclick="pressLSK('L1')" style="grid-row:2;grid-column:1;"></button>
+        <div id="row1" class="data-cell" style="grid-row:2;"></div>
+        <button class="lsk" onclick="pressLSK('R1')" style="grid-row:2;grid-column:3;"></button>
+        <button class="lsk" onclick="pressLSK('L2')" style="grid-row:3;grid-column:1;"></button>
+        <div id="row2" class="data-cell" style="grid-row:3;"></div>
+        <button class="lsk" onclick="pressLSK('R2')" style="grid-row:3;grid-column:3;"></button>
+        <button class="lsk" onclick="pressLSK('L3')" style="grid-row:4;grid-column:1;"></button>
+        <div id="row3" class="data-cell" style="grid-row:4;"></div>
+        <button class="lsk" onclick="pressLSK('R3')" style="grid-row:4;grid-column:3;"></button>
+        <button class="lsk" onclick="pressLSK('L4')" style="grid-row:5;grid-column:1;"></button>
+        <div id="row4" class="data-cell" style="grid-row:5;"></div>
+        <button class="lsk" onclick="pressLSK('R4')" style="grid-row:5;grid-column:3;"></button>
+        <button class="lsk" onclick="pressLSK('L5')" style="grid-row:6;grid-column:1;"></button>
+        <div id="row5" class="data-cell" style="grid-row:6;"></div>
+        <button class="lsk" onclick="pressLSK('R5')" style="grid-row:6;grid-column:3;"></button>
+        <button class="lsk" onclick="pressLSK('L6')" style="grid-row:7;grid-column:1;"></button>
+        <div id="row6" class="data-cell" style="grid-row:7;"></div>
+        <button class="lsk" onclick="pressLSK('R6')" style="grid-row:7;grid-column:3;"></button>
         <div id="scratchpad"></div>
     </div>
 
@@ -71,7 +82,7 @@
         <button class="btn">BRT</button>
         <button class="btn">F-PLN</button>
         <button class="btn">RAD</button>
-        <button class="btn">FUEL</button>
+        <button class="btn" onclick="setPage('FUEL')">FUEL</button>
         <button class="btn">SEC</button>
         <button class="btn">ATC</button>
         <button class="btn" onclick="setPage('MENU')">MENU</button>
@@ -80,8 +91,10 @@
     <div class="lower">
         <div>
             <div class="arrow-pad">
-                <button class="btn btn-key" onclick="key('↑')">↑</button><button class="btn btn-key" onclick="key('↓')">↓</button>
-                <button class="btn btn-key" onclick="key('←')">←</button><button class="btn btn-key" onclick="key('→')">→</button>
+                <button class="btn btn-key" onclick="key('↑')">↑</button>
+                <button class="btn btn-key" onclick="key('↓')">↓</button>
+                <button class="btn btn-key" onclick="key('←')">←</button>
+                <button class="btn btn-key" onclick="key('→')">→</button>
             </div>
             <div class="num-pad">
                 <button class="btn btn-key" onclick="key('1')">1</button><button class="btn btn-key" onclick="key('2')">2</button><button class="btn btn-key" onclick="key('3')">3</button>
@@ -94,23 +107,117 @@
     </div>
 </div>
 
-<div id="external-input">
+<!-- SimBrief panel -->
+<div class="panel">
+    <div class="panel-title">SIMBRIEF UPLINK</div>
     <div class="row">
         <input type="text" id="sb-id-input" placeholder="SimBrief username or pilot ID">
-        <button id="sb-btn" onclick="directUplink()">UPLINK</button>
+        <button class="panel-btn" onclick="directUplink()">UPLINK</button>
     </div>
-    <div id="sb-status">Enter your SimBrief username (e.g. johndoe) or numeric pilot ID</div>
+    <div class="status" id="sb-status">Enter your SimBrief username or numeric pilot ID</div>
+</div>
+
+<!-- Live companion panel -->
+<div class="panel">
+    <div class="panel-title">LIVE SIM CONNECTION — PC ONLY (MSFS 2020/2024)</div>
+    <div class="row">
+        <input type="text" id="ws-ip-input" placeholder="PC IP address  e.g. 192.168.1.50">
+        <button class="panel-btn" id="ws-btn" onclick="toggleLive()">CONNECT</button>
+    </div>
+    <div class="status" id="ws-status">Xbox users: SimBrief uplink only — live connection not available on console</div>
 </div>
 
 <script>
     let pad = "", page = "MENU";
-    let flight = { fromTo: "____/____", fltNo: "______", costIdx: "---", crzAlt: "_____/---°" };
+    let flight = {
+        fromTo: "____/____", fltNo: "______", costIdx: "---", crzAlt: "_____/---°",
+        fuel: { block:"---.-", trip:"---.-", altn:"---.-", rteRsv:"---.-", rsvPct:"5.0",
+                final:"---.-", extra:"---.-", taxi:"---.-", zfw:"---.-", tow:"---.-", lw:"---.-" }
+    };
 
-    function key(v) { 
-        if (["SUCCESS", "NO FLIGHT", "UPLINK ERR", "UPLINKING"].includes(pad)) pad = "";
-        pad += v; draw(); 
+    // Live sim data — populated by WebSocket when companion is connected
+    let live = null;
+    let ws = null;
+    let wsConnected = false;
+
+    // ── WebSocket / live connection ──────────────────────────────────────────
+
+    function toggleLive() {
+        if (wsConnected) {
+            disconnectLive();
+        } else {
+            connectLive();
+        }
     }
-    
+
+    function connectLive() {
+        const ip = document.getElementById('ws-ip-input').value.trim();
+        if (!ip) { setWsStatus('Enter your PC\'s IP address first', '#ff9d00'); return; }
+
+        setWsStatus('Connecting...', '#00ffff');
+
+        try {
+            ws = new WebSocket(`ws://${ip}:8765`);
+        } catch (e) {
+            setWsStatus('Invalid IP address', '#ff4444');
+            return;
+        }
+
+        ws.onopen = () => {
+            wsConnected = true;
+            document.getElementById('ws-btn').textContent = 'DISCONNECT';
+            document.getElementById('ws-btn').classList.add('active');
+            document.getElementById('live-dot').classList.add('connected');
+            setWsStatus(`Connected to ${ip}:8765 — receiving live sim data`, '#00ff00');
+            draw();
+        };
+
+        ws.onmessage = (evt) => {
+            try {
+                const data = JSON.parse(evt.data);
+                if (data.connected) {
+                    live = data;
+                } else {
+                    live = null;
+                    setWsStatus('Companion connected but sim not running', '#ff9d00');
+                }
+                // If on a live page, redraw with new data
+                if (['PROG', 'FUEL'].includes(page)) draw();
+            } catch (e) {}
+        };
+
+        ws.onclose = () => {
+            wsConnected = false;
+            live = null;
+            document.getElementById('ws-btn').textContent = 'CONNECT';
+            document.getElementById('ws-btn').classList.remove('active');
+            document.getElementById('live-dot').classList.remove('connected');
+            setWsStatus('Disconnected — companion app not running?', '#ff4444');
+            draw();
+        };
+
+        ws.onerror = () => {
+            setWsStatus(`Could not connect to ${ip}:8765 — is the companion app running?`, '#ff4444');
+        };
+    }
+
+    function disconnectLive() {
+        if (ws) ws.close();
+    }
+
+    function setWsStatus(msg, color) {
+        const el = document.getElementById('ws-status');
+        el.textContent = msg;
+        el.style.color = color || '#aaa';
+    }
+
+    // ── SimBrief uplink ──────────────────────────────────────────────────────
+
+    function key(v) {
+        if (["SUCCESS","NO FLIGHT","UPLINK ERR","UPLINKING"].includes(pad)) pad = "";
+        pad += v; draw();
+    }
+
     function setPage(p) { page = p; draw(); }
 
     function setStatus(msg, color) {
@@ -126,70 +233,93 @@
         pad = "UPLINKING"; draw();
         setStatus('Connecting to SimBrief...', '#00ffff');
 
-        // Build URL: numeric = userid, text = username
         const isNumeric = /^\d+$/.test(raw);
         const param = isNumeric ? `userid=${raw}` : `username=${raw}`;
         const url = `https://www.simbrief.com/api/xml.fetcher.php?${param}&json=1`;
 
         try {
             const response = await fetch(url);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const d = await response.json();
 
-            // SimBrief returns a "fetch" status field on error
             if (d.fetch && d.fetch.status === 'Error') {
                 pad = "NO FLIGHT";
                 setStatus('No active flight plan found for this user', '#ff9d00');
                 draw(); return;
             }
+            if (!d.origin || !d.destination) throw new Error('Missing flight data');
 
-            if (!d.origin || !d.destination) {
-                throw new Error('Missing flight data');
-            }
-
-            flight.fromTo = `${d.origin.icao_code}/${d.destination.icao_code}`.toUpperCase();
-            flight.fltNo  = `${d.general.icao_airline}${d.general.flight_number}`.toUpperCase();
+            flight.fromTo  = `${d.origin.icao_code}/${d.destination.icao_code}`.toUpperCase();
+            flight.fltNo   = `${d.general.icao_airline}${d.general.flight_number}`.toUpperCase();
             flight.costIdx = d.general.costindex ?? d.general.cost_index ?? '---';
             const fl = Math.round(parseInt(d.general.initial_altitude) / 100);
-            flight.crzAlt = `FL${fl}/---°`;
+            flight.crzAlt  = `FL${fl}/---°`;
+
+            const kg = (v) => v ? (parseInt(v) / 1000).toFixed(1) : '---.-';
+            const f = d.fuel || {};
+            flight.fuel.block  = kg(f.plan_ramp);
+            flight.fuel.trip   = kg(f.plan_trip);
+            flight.fuel.altn   = kg(f.plan_altn);
+            flight.fuel.rteRsv = kg(f.plan_contingency);
+            flight.fuel.rsvPct = f.cont_rule ? parseFloat(f.cont_rule).toFixed(1) : '5.0';
+            flight.fuel.final  = kg(f.plan_reserve);
+            flight.fuel.extra  = kg(f.plan_extra);
+            flight.fuel.taxi   = kg(f.plan_taxi);
+            flight.fuel.zfw    = kg(d.weights ? d.weights.est_zfw : null);
+            flight.fuel.tow    = kg(d.weights ? d.weights.est_tow : null);
+            flight.fuel.lw     = kg(d.weights ? d.weights.est_ldw : null);
 
             pad = "SUCCESS";
             setStatus(`Uplinked: ${flight.fltNo}  ${flight.fromTo}`, '#00ff00');
 
         } catch (e) {
-            // SimBrief supports CORS for their API — if we get a network error it's
-            // likely a browser security block (mixed content, extension, etc.)
             pad = "UPLINK ERR";
-            if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
-                setStatus('Network error — check your browser allows cross-origin requests', '#ff4444');
-            } else {
-                setStatus(`Error: ${e.message}`, '#ff4444');
-            }
+            setStatus(e.message.includes('fetch') ? 'Network error — check browser allows cross-origin' : `Error: ${e.message}`, '#ff4444');
             console.error('SimBrief uplink failed:', e);
         }
-
         draw();
     }
+
+    // ── LSK handling ─────────────────────────────────────────────────────────
 
     function pressLSK(id) {
         if (page === 'MENU' && id === 'L1') setPage('INIT');
         if (page === 'INIT') {
             if (!pad || ["SUCCESS","NO FLIGHT","UPLINK ERR","UPLINKING"].includes(pad)) return;
             if (id === 'R1') flight.fromTo = pad;
-            if (id === 'L3') flight.fltNo = pad;
+            if (id === 'L3') flight.fltNo  = pad;
             if (id === 'L4') flight.costIdx = pad;
-            if (id === 'L5') flight.crzAlt = pad;
+            if (id === 'L5') flight.crzAlt  = pad;
             pad = "";
         }
         draw();
     }
 
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function fmt(val, decimals = 0, suffix = '') {
+        if (val === null || val === undefined) return '---';
+        return Number(val).toFixed(decimals) + suffix;
+    }
+
+    function hdg(val) {
+        if (val === null || val === undefined) return '---';
+        return String(Math.round(val)).padStart(3, '0');
+    }
+
+    function nc(val, unit = '') {
+        // Returns value or NOT CONNECTED placeholder
+        if (!wsConnected) return '- - -';
+        if (live === null) return '- - -';
+        if (val === null || val === undefined) return '---';
+        return val + unit;
+    }
+
+    // ── Draw ──────────────────────────────────────────────────────────────────
+
     function draw() {
-        document.getElementById('title').innerText = (page === "MENU") ? "MCDU MENU" : page + " A";
+        const titles = { MENU:'MCDU MENU', FUEL:'FUEL PRED', PROG:'PROG', INIT:'INIT A' };
+        document.getElementById('title-text').innerText = titles[page] || page + ' A';
         document.getElementById('scratchpad').innerText = pad;
 
         if (page === "MENU") {
@@ -199,13 +329,60 @@
             setRow(4, "", "", "&lt;CFDS", "", "G", "");
             setRow(5, "", "", "", "", "", "");
             setRow(6, "", "", "&lt;SATCOM", "", "G", "");
+
         } else if (page === "INIT") {
-            setRow(1, "CO RTE", "FROM/TO", "NONE", flight.fromTo, "W", "C");
-            setRow(2, "ALTN/CO RTE", "INIT", "NONE", "REQUEST*", "W", "A");
-            setRow(3, "FLT NBR", "", flight.fltNo, "", "C", "");
-            setRow(4, "COST INDEX", "", flight.costIdx, "", "C", "");
-            setRow(5, "CRZ FL/TEMP", "", flight.crzAlt, "", "C", "");
-            setRow(6, "TROPO", "", "36090", "", "W", "");
+            setRow(1, "CO RTE", "FROM/TO",   "NONE",       flight.fromTo, "W", "C");
+            setRow(2, "ALTN/CO RTE", "INIT", "NONE",       "REQUEST*",    "W", "A");
+            setRow(3, "FLT NBR", "",          flight.fltNo, "",            "C", "");
+            setRow(4, "COST INDEX", "",        flight.costIdx, "",          "C", "");
+            setRow(5, "CRZ FL/TEMP", "",       flight.crzAlt, "",           "C", "");
+            setRow(6, "TROPO", "",             "36090",      "",            "W", "");
+
+        } else if (page === "FUEL") {
+            const fu = flight.fuel;
+            // If live connected, override FOB with real sim value
+            const fob = (wsConnected && live) ? live.fuelTonnes : fu.block;
+            const fobColor = (wsConnected && live) ? "G" : "C";
+            setRow(1, "FOB" + (wsConnected ? " [LIVE]":""), "GW/CG",      fob,                       "---.-/--.-", fobColor, "G");
+            setRow(2, "DEST EFOB", "TIME",                                 fu.trip,                   "----",       "C", "G");
+            setRow(3, "ALTN EFOB", "TIME",                                 fu.altn,                   "----",       "C", "G");
+            setRow(4, "RTE RSV/%", "",                                     `${fu.rteRsv}/${fu.rsvPct}`,"",          "C", "");
+            setRow(5, "FINAL/TIME", "MIN DEST FOB",                        fu.final + "/0030",        "---.-",      "C", "A");
+            setRow(6, "EXTRA/TIME", "ZFW",                                 fu.extra + "/----",        fu.zfw,       "G", "C");
+
+        } else if (page === "PROG") {
+            // PROG page — live sim data when connected, NOT CONNECTED otherwise
+            if (!wsConnected || !live) {
+                setRow(1, "AIRSPEED", "ALTITUDE",  "NOT",   "CONNECTED", "A", "A");
+                setRow(2, "HDG", "V/S",            "NOT",   "CONNECTED", "A", "A");
+                setRow(3, "FOB", "",               "NOT CONNECTED", "",  "A", "");
+                setRow(4, "AP ALT", "AP HDG",      "NOT",   "CONNECTED", "A", "A");
+                setRow(5, "AP SPD", "AP",          "NOT",   "CONNECTED", "A", "A");
+                setRow(6, "ENG 1 N1", "ENG 2 N1", "NOT",   "CONNECTED", "A", "A");
+            } else {
+                const L = live;
+                const apOn = L.apMaster ? "AP ON" : "AP OFF";
+                const apColor = L.apMaster ? "G" : "A";
+                const vsStr = (L.vs >= 0 ? "+" : "") + Math.round(L.vs);
+                setRow(1, "AIRSPEED", "ALTITUDE",
+                    fmt(L.ias, 0, "KT"),
+                    fmt(L.altitude, 0, "FT"),    "G", "G");
+                setRow(2, "HDG", "V/S",
+                    hdg(L.heading) + "°",
+                    vsStr + "FPM",               "G", "G");
+                setRow(3, "FOB [LIVE]", "",
+                    L.fuelTonnes + "T",  "",     "G", "");
+                setRow(4, "AP ALT", "AP HDG",
+                    fmt(L.apAltitude, 0, "FT"),
+                    hdg(L.apHeading) + "°",      "C", "C");
+                setRow(5, "AP SPD", "",
+                    fmt(L.apSpeed, 0, "KT"),
+                    apOn,                        "C", apColor);
+                setRow(6, "ENG 1 N1", "ENG 2 N1",
+                    fmt(L.n1Eng1, 1, "%"),
+                    fmt(L.n1Eng2, 1, "%"),       "G", "G");
+            }
+
         } else {
             for (let i = 1; i <= 6; i++) setRow(i, "", "", "", "", "", "");
             setRow(3, "", "PAGE UNDER", "", "CONSTRUCTION", "", "A");
@@ -219,13 +396,14 @@
         `;
     }
 
+    // ── Alpha keyboard ────────────────────────────────────────────────────────
+
     const al = document.getElementById('alpha-btns');
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').forEach(x => {
         let b = document.createElement('button'); b.className = "btn btn-key"; b.innerText = x;
         b.onclick = () => key(x); al.appendChild(b);
     });
-    
-    [["SP", " "], ["CLR", ""]].forEach(([label]) => {
+    [["SP"," "],["CLR",""]].forEach(([label]) => {
         let b = document.createElement('button'); b.className = "btn btn-key"; b.innerText = label;
         b.onclick = () => { if (label === 'CLR') { pad = ""; draw(); } else key(" "); };
         al.appendChild(b);
