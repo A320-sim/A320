@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>A320 MCDU - GitHub Emulator</title>
+    <title>A320 MCDU - GitHub Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=B612+Mono:wght@700&display=swap');
         :root { --amb: #ff9d00; --cyn: #00ffff; --grn: #00ff00; --wht: #ffffff; }
@@ -153,7 +153,7 @@
 
             flight.fromTo = `${d.origin.icao_code}/${d.destination.icao_code}`.toUpperCase();
             flight.fltNo  = `${d.general.icao_airline}${d.general.flight_number}`.toUpperCase();
-            flight.costIdx = d.general.cost_index || '---';
+            flight.costIdx = d.general.costindex ?? d.general.cost_index ?? '---';
             const fl = Math.round(parseInt(d.general.initial_altitude) / 100);
             flight.crzAlt = `FL${fl}/---°`;
 
