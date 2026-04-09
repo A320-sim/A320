@@ -21,8 +21,9 @@ body{background:#1a1a1a;color:white;font-family:'B612 Mono',monospace;display:fl
 #live-dot{width:8px;height:8px;border-radius:50%;background:#333;flex-shrink:0;transition:background .3s;}
 #live-dot.on{background:var(--grn);box-shadow:0 0 6px var(--grn);}
 #scratchpad{grid-column:2;grid-row:8;z-index:2;font-size:19px;padding:0 12px;display:flex;align-items:center;border-top:1px solid #222;min-height:45px;overflow:hidden;}
-#scratchpad.err{color:var(--amb);}
-#scratchpad.ok{color:white;}
+#scratchpad.err,#sp.err{color:var(--amb);}
+#scratchpad.ok,#sp.ok{color:white;}
+#sp{grid-column:2;grid-row:8;z-index:2;font-size:19px;padding:0 12px;display:flex;align-items:center;border-top:1px solid #222;min-height:45px;overflow:hidden;}
 .lsk{width:48px;height:32px;background:#222;border:1px solid #000;cursor:pointer;border-radius:4px;z-index:2;justify-self:center;align-self:center;}
 .lsk:active{background:#444;}
 .dc{grid-column:2;z-index:2;display:flex;flex-direction:column;justify-content:center;height:60px;padding:0 12px;}
@@ -155,7 +156,7 @@ const FL = {  // flight data
   perf:{ v1:'---',vr:'---',v2:'---',flaps:'--',ths:'UP0.0',flex:'---',thrRed:'1500',thrAcc:'1500',transAlt:'18000' },
   fuel:{ block:'---.-',trip:'---.-',altn:'---.-',rteRsv:'---.-',rsvPct:'5.0',final:'---.-',extra:'---.-',taxi:'---.-',zfw:'---.-',tow:'---.-',lw:'---.-' },
   route:[], // array of waypoint strings from SimBrief
-  atsu:null,
+  atsu:null, secFromTo:'', secRoute:[], secFltNo:'',
   aircraft:'A320', engine:'CFM56-5B4', navdb:'2501/2502',
 };
 
@@ -173,12 +174,16 @@ let atsuMsg='', atsuWxMsg='';
 // ═══════════════════════════════════════════════════════════════════════════
 const CLEAR_ON_NEXT = ['FORMAT ERROR','OUT OF RANGE','NOT ALLOWED','ENTRY DELETED'];
 
+function blurInputs(){ if(document.activeElement&&document.activeElement.tagName==='INPUT') document.activeElement.blur(); }
+
 function key(v){
+  blurInputs();
   if(padErr||CLEAR_ON_NEXT.includes(pad)){pad='';padErr=false;}
   pad+=v; draw();
 }
 
 function clr(){
+  blurInputs();
   if(pad===''){pad='CLR';}
   else if(pad==='CLR'){pad='';}
   else{pad=pad.slice(0,-1);}
@@ -216,12 +221,19 @@ function validate(rule,v){
 // ═══════════════════════════════════════════════════════════════════════════
 // PAGE NAVIGATION
 // ═══════════════════════════════════════════════════════════════════════════
-function go(p){ page=p; if(p==='FPLN') fpPage=0; draw(); }
+function go(p){
+  blurInputs();
+  if(p==='ATC') p='ATSU_ATC'; // ATC button shortcut
+  page=p;
+  if(p==='FPLN') fpPage=0;
+  draw();
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LSK HANDLER
 // ═══════════════════════════════════════════════════════════════════════════
 function lsk(id){
+  blurInputs();
   const p=pad, up=p.toUpperCase();
 
   // — MENU —
@@ -288,7 +300,11 @@ function lsk(id){
   if(page==='FPLN'){
     if(id==='R6'&&pad==='CLR'){ pad=''; draw(); return; }
     if(id==='L6'){ fpPage=Math.max(0,fpPage-1);draw();return; }
-    if(id==='R5'){ fpPage=fpPage+1;draw();return; }
+    if(id==='R6'){
+      const wpts=[FL.fromTo.split('/')[0]||'----',...FL.route,FL.fromTo.split('/')[1]||'----'];
+      const maxPage=Math.max(0,Math.ceil(wpts.length/5)-1);
+      fpPage=Math.min(fpPage+1,maxPage);draw();return;
+    }
     draw(); return;
   }
 
@@ -299,27 +315,39 @@ function lsk(id){
   // — ATSU tree —
   if(page==='ATSU'){ if(id==='L1') go('ATSU_AOC'); if(id==='L2') go('ATSU_ATC'); if(id==='R6') go('MENU'); draw();return; }
   if(page==='ATSU_AOC'){
-    if(id==='L1'){atsuRequestOFP();return;}
-    if(id==='L2'){atsuRequestWX();return;}
-    if(id==='R6') go('ATSU');draw();return;
+    if(id==='L1'){ atsuRequestOFP(); return; }
+    if(id==='L2'){ atsuRequestWX(); return; }
+    if(id==='R6'){ go('ATSU'); return; }
+    draw(); return;
   }
-  if(page==='ATSU_ATC'){ if(id==='R6') go('ATSU');draw();return; }
+  if(page==='ATSU_ATC'){ if(id==='R6'){ go('ATSU'); draw(); return; } draw(); return; }
 
   // — AIDS —
   if(page==='AIDS'){ if(id==='L1') go('AIDS_ENG'); if(id==='L2') go('AIDS_APU'); if(id==='R6') go('MENU'); draw();return; }
-  if(['AIDS_ENG','AIDS_APU'].includes(page)){ if(id==='R6') go('AIDS');draw();return; }
+  if(['AIDS_ENG','AIDS_APU'].includes(page)){ if(id==='R6'){ go('AIDS'); draw(); return; } draw(); return; }
 
   // — CFDS —
   if(page==='CFDS'){ if(id==='L1') go('CFDS_LLR'); if(id==='L2') go('CFDS_PFR'); if(id==='L3') go('CFDS_SYS'); if(id==='R6') go('MENU'); draw();return; }
-  if(['CFDS_LLR','CFDS_PFR','CFDS_SYS'].includes(page)){ if(id==='R6') go('CFDS');draw();return; }
+  if(['CFDS_LLR','CFDS_PFR','CFDS_SYS'].includes(page)){ if(id==='R6'){ go('CFDS'); draw(); return; } draw(); return; }
 
   // — SATCOM —
-  if(page==='SATCOM'){ if(id==='R6') go('MENU');draw();return; }
+  if(page==='SATCOM'){ if(id==='R6'){ go('MENU'); draw(); return; } draw(); return; }
 
-  // — BRT —
+  // — BRT — (INCREASE on row 4 = L4, DECREASE on row 5 = L5)
   if(page==='BRT'){
-    if(id==='L3'){ brt=Math.min(100,brt+10); applyBrt(); }
-    if(id==='L4'){ brt=Math.max(10,brt-10); applyBrt(); }
+    if(id==='L4'){ brt=Math.min(100,brt+10); applyBrt(); draw(); return; }
+    if(id==='L5'){ brt=Math.max(10,brt-10); applyBrt(); draw(); return; }
+    draw(); return;
+  }
+
+  // — SEC —
+  if(page==='SEC'){
+    if(id==='L3'){ // COPY ACTIVE*
+      FL.secFromTo=FL.fromTo;
+      FL.secRoute=[...FL.route];
+      FL.secFltNo=FL.fltNo;
+      pad='SEC ACTIVE COPIED'; draw(); return;
+    }
     draw(); return;
   }
 
@@ -486,7 +514,7 @@ function draw(){
     R(3,'FLT NBR','',FL.fltNo,'','C','');
     R(4,'COST INDEX','',FL.costIdx,'','C','');
     R(5,'CRZ FL/TEMP','',FL.crzAlt+'/---°','','C','');
-    R(6,'TROPO','','',FL.tropo,'','C'); break;
+    R(6,'TROPO','',FL.tropo,'','C',''); break;
 
   // ── PERF TAKEOFF ─────────────────────────────────────────────────────
   case 'PERF':{
@@ -532,14 +560,17 @@ function draw(){
       R(6,'','','','','','');
     } else {
       const wpts=[dep,...FL.route,arr];
-      const start=fpPage*4;
-      const slice=wpts.slice(start,start+6);
-      R(1,'F-PLN '+(fpPage+1)+'/'+Math.ceil(wpts.length/4),'',slice[0]||'','','C','');
+      const perPage=5;
+      const totalPages=Math.ceil(wpts.length/perPage);
+      const start=fpPage*perPage;
+      const slice=wpts.slice(start,start+perPage);
+      R(1,'F-PLN '+(fpPage+1)+'/'+totalPages,'',slice[0]||'','','C','');
       R(2,'',slice[1]||'','','','','C');
       R(3,'',slice[2]||'','','','','C');
       R(4,'',slice[3]||'','','','','C');
       R(5,'',slice[4]||'','','','','C');
-      R(6,'↑PREV','NEXT↓',start>0?'&lt;PREV PAGE':'','MORE>','W','W');
+      const hasPrev=fpPage>0, hasNext=fpPage<totalPages-1;
+      R(6,hasPrev?'↑PREV':'',hasNext?'NEXT↓':'',hasPrev?'&lt;PREV':'',hasNext?'MORE>':'','W','W');
     }
     break;
   }
@@ -728,16 +759,18 @@ function draw(){
     R(6,'','','','','',''); break;
 
   // ── SEC F-PLN ────────────────────────────────────────────────────────
-  case 'SEC':
-    R(1,'SEC FROM/TO','',FL.fromTo,'','X','');
-    R(2,'','','','','','');
-    R(3,'','','COPY ACTIVE*','','A','');
+  case 'SEC':{
+    const hasSec=!!FL.secFromTo;
+    R(1,'SEC FROM/TO','',hasSec?FL.secFromTo:'----/----','','C','');
+    R(2,'SEC FLT NBR','',hasSec?(FL.secFltNo||'------'):'------','','C','');
+    R(3,'','','&lt;COPY ACTIVE*','','A','');
     R(4,'','','','','','');
     R(5,'','','','','','');
     R(6,'','','','','',''); break;
+  }
 
-  // ── ATC (shortcut key) ───────────────────────────────────────────────
-  case 'ATC': go('ATSU_ATC'); break;
+  // ATC handled in go() — should never reach here
+  case 'ATC': page='ATSU_ATC'; draw(); return;
 
   default:
     for(let i=1;i<=6;i++) R(i,'','','','','','');
