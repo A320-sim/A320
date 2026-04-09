@@ -1,649 +1,793 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>A320 MCDU</title>
-    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="shortcut icon" href="favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="A320" />
-    <link rel="manifest" href="site.webmanifest" />
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=B612+Mono:wght@700&display=swap');
-        :root { --amb: #ff9d00; --cyn: #00ffff; --grn: #00ff00; --wht: #ffffff; }
-        body { background: #1a1a1a; color: white; font-family: 'B612 Mono', monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; user-select: none; }
-        #mcdu { width: 620px; background: #5b6a7a; padding: 25px; border-radius: 15px; border: 4px solid #444; margin-bottom: 20px; }
-        #bezel { background: #080808; display: grid; grid-template-columns: 60px 1fr 60px; grid-template-rows: 45px repeat(6, 60px) 45px; padding: 10px; border-radius: 10px; }
-        #screen-bg { grid-column: 2; grid-row: 1 / span 8; background: #000; border: 2px solid #333; height: 100%; z-index: 1; }
-        #title { grid-column: 2; grid-row: 1; text-align: center; color: white; z-index: 2; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        #live-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; flex-shrink: 0; }
-        #live-dot.connected { background: var(--grn); box-shadow: 0 0 6px var(--grn); }
-        #scratchpad { grid-column: 2; grid-row: 8; color: white; z-index: 2; font-size: 20px; padding: 0 12px; display: flex; align-items: center; border-top: 1px solid #222; min-height: 45px; }
-        .lsk { width: 48px; height: 32px; background: #222; border: 1px solid #000; cursor: pointer; border-radius: 4px; z-index: 2; justify-self: center; align-self: center; }
-        .lsk:active { background: #444; }
-        .data-cell { grid-column: 2; z-index: 2; display: flex; flex-direction: column; justify-content: center; height: 60px; padding: 0 12px; box-sizing: border-box; }
-        .label-row { display: flex; justify-content: space-between; font-size: 11px; color: #ccc; line-height: 1; margin-bottom: 2px; }
-        .val-row { display: flex; justify-content: space-between; font-size: 22px; font-weight: bold; line-height: 1; }
-        .mode-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 20px 0; }
-        .lower { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
-        .btn { background: #1a1a1a; border: 1px solid #000; color: white; padding: 12px 2px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #000; }
-        .btn:active { transform: translateY(2px); box-shadow: none; }
-        .btn-key { font-size: 18px; padding: 15px 0; }
-        .arrow-pad { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 6px; }
-        .num-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .alpha-pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-
-        /* External panels */
-        .panel { width: 620px; background: #2a2a2a; padding: 15px; border-radius: 10px; border: 2px solid #555; display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 12px; }
-        .panel-title { font-size: 11px; color: #888; letter-spacing: 2px; align-self: flex-start; }
-        .panel .row { display: flex; gap: 10px; align-items: center; justify-content: center; width: 100%; }
-        .panel input { background: #000; color: var(--grn); border: 1px solid #555; padding: 8px; font-family: 'B612 Mono'; outline: none; font-size: 14px; flex: 1; }
-        .panel-btn { background: #5b6a7a; color: white; border: none; padding: 10px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; font-family: 'B612 Mono'; white-space: nowrap; }
-        .panel-btn:hover { background: #6e7f91; }
-        .panel-btn.active { background: #1a6b1a; }
-        .status { font-size: 12px; color: #aaa; text-align: center; }
-
-        /* Live indicator strip */
-        #live-strip { width: 620px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11px; color: #555; margin-bottom: 4px; }
-        #live-strip.connected { color: var(--grn); }
-
-        .G { color: var(--grn); } .C { color: var(--cyn); } .A { color: var(--amb); } .W { color: var(--wht); } .X { color: #555; }
-    </style>
+<meta charset="UTF-8">
+<title>A320 MCDU</title>
+<link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="A320" />
+<link rel="manifest" href="site.webmanifest" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&display=swap');
+:root{--amb:#ff9d00;--cyn:#00ffff;--grn:#00ff00;--wht:#ffffff;--red:#ff4444;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#1a1a1a;color:white;font-family:'B612 Mono',monospace;display:flex;flex-direction:column;align-items:center;padding:20px;user-select:none;}
+#mcdu{width:620px;background:#5b6a7a;padding:25px;border-radius:15px;border:4px solid #444;margin-bottom:14px;}
+#bezel{background:#080808;display:grid;grid-template-columns:60px 1fr 60px;grid-template-rows:45px repeat(6,60px) 45px;padding:10px;border-radius:10px;}
+#screen-bg{grid-column:2;grid-row:1/span 8;background:#000;border:2px solid #333;height:100%;z-index:1;}
+#title{grid-column:2;grid-row:1;text-align:center;color:white;z-index:2;font-size:18px;display:flex;align-items:center;justify-content:center;gap:8px;}
+#live-dot{width:8px;height:8px;border-radius:50%;background:#333;flex-shrink:0;transition:background .3s;}
+#live-dot.on{background:var(--grn);box-shadow:0 0 6px var(--grn);}
+#scratchpad{grid-column:2;grid-row:8;z-index:2;font-size:19px;padding:0 12px;display:flex;align-items:center;border-top:1px solid #222;min-height:45px;overflow:hidden;}
+#scratchpad.err{color:var(--amb);}
+#scratchpad.ok{color:white;}
+.lsk{width:48px;height:32px;background:#222;border:1px solid #000;cursor:pointer;border-radius:4px;z-index:2;justify-self:center;align-self:center;}
+.lsk:active{background:#444;}
+.dc{grid-column:2;z-index:2;display:flex;flex-direction:column;justify-content:center;height:60px;padding:0 12px;}
+.lr{display:flex;justify-content:space-between;font-size:11px;color:#aaa;line-height:1;margin-bottom:2px;}
+.vr{display:flex;justify-content:space-between;font-size:21px;font-weight:bold;line-height:1;overflow:hidden;}
+.vr span{overflow:hidden;white-space:nowrap;}
+.mode-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:18px 0;}
+.lower{display:grid;grid-template-columns:180px 1fr;gap:20px;}
+.btn{background:#1a1a1a;border:1px solid #000;color:white;padding:12px 2px;border-radius:4px;font-size:10px;font-weight:bold;cursor:pointer;box-shadow:0 3px 0 #000;font-family:'B612 Mono',monospace;}
+.btn:active{transform:translateY(2px);box-shadow:none;}
+.btn-key{font-size:18px;padding:14px 0;}
+.arrow-pad{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px;}
+.num-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.alpha-pad{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+.panel{width:620px;background:#242424;padding:14px;border-radius:10px;border:1.5px solid #444;display:flex;flex-direction:column;gap:9px;align-items:center;margin-bottom:10px;}
+.panel-title{font-size:10px;color:#666;letter-spacing:2px;align-self:flex-start;}
+.prow{display:flex;gap:10px;align-items:center;justify-content:center;width:100%;}
+.panel input{background:#000;color:var(--grn);border:1px solid #444;padding:8px;font-family:'B612 Mono';outline:none;font-size:14px;flex:1;border-radius:3px;}
+.pbtn{background:#5b6a7a;color:white;border:none;padding:9px 14px;cursor:pointer;border-radius:4px;font-weight:bold;font-family:'B612 Mono';white-space:nowrap;font-size:13px;}
+.pbtn:hover{background:#6e7f91;}
+.pbtn.live{background:#1a6b1a;}
+.pstat{font-size:11px;color:#666;text-align:center;}
+/* BRT slider */
+#brt-bar{width:100%;height:6px;background:#333;border-radius:3px;cursor:pointer;position:relative;}
+#brt-fill{height:100%;background:var(--grn);border-radius:3px;width:80%;}
+/* colour classes */
+.G{color:var(--grn);}.C{color:var(--cyn);}.A{color:var(--amb);}.W{color:var(--wht);}.X{color:#444;}.R{color:var(--red);}
+</style>
 </head>
 <body>
 
 <div id="mcdu">
-    <div id="bezel">
-        <div id="screen-bg"></div>
-        <div id="title"><span id="live-dot"></span><span id="title-text">MCDU MENU</span></div>
+ <div id="bezel">
+  <div id="screen-bg"></div>
+  <div id="title"><span id="live-dot"></span><span id="ttl">MCDU MENU</span></div>
+  <button class="lsk" onclick="lsk('L1')" style="grid-row:2;grid-column:1;"></button>
+  <div id="r1" class="dc" style="grid-row:2;"></div>
+  <button class="lsk" onclick="lsk('R1')" style="grid-row:2;grid-column:3;"></button>
+  <button class="lsk" onclick="lsk('L2')" style="grid-row:3;grid-column:1;"></button>
+  <div id="r2" class="dc" style="grid-row:3;"></div>
+  <button class="lsk" onclick="lsk('R2')" style="grid-row:3;grid-column:3;"></button>
+  <button class="lsk" onclick="lsk('L3')" style="grid-row:4;grid-column:1;"></button>
+  <div id="r3" class="dc" style="grid-row:4;"></div>
+  <button class="lsk" onclick="lsk('R3')" style="grid-row:4;grid-column:3;"></button>
+  <button class="lsk" onclick="lsk('L4')" style="grid-row:5;grid-column:1;"></button>
+  <div id="r4" class="dc" style="grid-row:5;"></div>
+  <button class="lsk" onclick="lsk('R4')" style="grid-row:5;grid-column:3;"></button>
+  <button class="lsk" onclick="lsk('L5')" style="grid-row:6;grid-column:1;"></button>
+  <div id="r5" class="dc" style="grid-row:6;"></div>
+  <button class="lsk" onclick="lsk('R5')" style="grid-row:6;grid-column:3;"></button>
+  <button class="lsk" onclick="lsk('L6')" style="grid-row:7;grid-column:1;"></button>
+  <div id="r6" class="dc" style="grid-row:7;"></div>
+  <button class="lsk" onclick="lsk('R6')" style="grid-row:7;grid-column:3;"></button>
+  <div id="sp" class="ok"></div>
+ </div>
 
-        <button class="lsk" onclick="pressLSK('L1')" style="grid-row:2;grid-column:1;"></button>
-        <div id="row1" class="data-cell" style="grid-row:2;"></div>
-        <button class="lsk" onclick="pressLSK('R1')" style="grid-row:2;grid-column:3;"></button>
-        <button class="lsk" onclick="pressLSK('L2')" style="grid-row:3;grid-column:1;"></button>
-        <div id="row2" class="data-cell" style="grid-row:3;"></div>
-        <button class="lsk" onclick="pressLSK('R2')" style="grid-row:3;grid-column:3;"></button>
-        <button class="lsk" onclick="pressLSK('L3')" style="grid-row:4;grid-column:1;"></button>
-        <div id="row3" class="data-cell" style="grid-row:4;"></div>
-        <button class="lsk" onclick="pressLSK('R3')" style="grid-row:4;grid-column:3;"></button>
-        <button class="lsk" onclick="pressLSK('L4')" style="grid-row:5;grid-column:1;"></button>
-        <div id="row4" class="data-cell" style="grid-row:5;"></div>
-        <button class="lsk" onclick="pressLSK('R4')" style="grid-row:5;grid-column:3;"></button>
-        <button class="lsk" onclick="pressLSK('L5')" style="grid-row:6;grid-column:1;"></button>
-        <div id="row5" class="data-cell" style="grid-row:6;"></div>
-        <button class="lsk" onclick="pressLSK('R5')" style="grid-row:6;grid-column:3;"></button>
-        <button class="lsk" onclick="pressLSK('L6')" style="grid-row:7;grid-column:1;"></button>
-        <div id="row6" class="data-cell" style="grid-row:7;"></div>
-        <button class="lsk" onclick="pressLSK('R6')" style="grid-row:7;grid-column:3;"></button>
-        <div id="scratchpad"></div>
-    </div>
+ <div class="mode-row">
+  <button class="btn" onclick="go('DIR')">DIR</button>
+  <button class="btn" onclick="go('PROG')">PROG</button>
+  <button class="btn" onclick="go('PERF')">PERF</button>
+  <button class="btn" onclick="go('INIT')">INIT</button>
+  <button class="btn" onclick="go('DATA')">DATA</button>
+  <button class="btn" onclick="go('BRT')">BRT</button>
+  <button class="btn" onclick="go('FPLN')">F-PLN</button>
+  <button class="btn" onclick="go('RAD')">RAD</button>
+  <button class="btn" onclick="go('FUEL')">FUEL</button>
+  <button class="btn" onclick="go('SEC')">SEC</button>
+  <button class="btn" onclick="go('ATC')">ATC</button>
+  <button class="btn" onclick="go('MENU')">MENU</button>
+ </div>
 
-    <div class="mode-row">
-        <button class="btn" onclick="setPage('DIR')">DIR</button>
-        <button class="btn" onclick="setPage('PROG')">PROG</button>
-        <button class="btn" onclick="setPage('PERF')">PERF</button>
-        <button class="btn" onclick="setPage('INIT')">INIT</button>
-        <button class="btn" onclick="setPage('DATA')">DATA</button>
-        <button class="btn">BRT</button>
-        <button class="btn">F-PLN</button>
-        <button class="btn">RAD</button>
-        <button class="btn" onclick="setPage('FUEL')">FUEL</button>
-        <button class="btn">SEC</button>
-        <button class="btn">ATC</button>
-        <button class="btn" onclick="setPage('MENU')">MENU</button>
-    </div>
-
-    <div class="lower">
-        <div>
-            <div class="arrow-pad">
-                <button class="btn btn-key" onclick="key('↑')">↑</button>
-                <button class="btn btn-key" onclick="key('↓')">↓</button>
-                <button class="btn btn-key" onclick="key('←')">←</button>
-                <button class="btn btn-key" onclick="key('→')">→</button>
-            </div>
-            <div class="num-pad">
-                <button class="btn btn-key" onclick="key('1')">1</button><button class="btn btn-key" onclick="key('2')">2</button><button class="btn btn-key" onclick="key('3')">3</button>
-                <button class="btn btn-key" onclick="key('4')">4</button><button class="btn btn-key" onclick="key('5')">5</button><button class="btn btn-key" onclick="key('6')">6</button>
-                <button class="btn btn-key" onclick="key('7')">7</button><button class="btn btn-key" onclick="key('8')">8</button><button class="btn btn-key" onclick="key('9')">9</button>
-                <button class="btn btn-key" onclick="key('.')">.</button><button class="btn btn-key" onclick="key('0')">0</button><button class="btn btn-key" onclick="key('/')">/</button>
-            </div>
-        </div>
-        <div class="alpha-pad" id="alpha-btns"></div>
-    </div>
+ <div class="lower">
+  <div>
+   <div class="arrow-pad">
+    <button class="btn btn-key" onclick="key('↑')">↑</button>
+    <button class="btn btn-key" onclick="key('↓')">↓</button>
+    <button class="btn btn-key" onclick="key('←')">←</button>
+    <button class="btn btn-key" onclick="key('→')">→</button>
+   </div>
+   <div class="num-pad">
+    <button class="btn btn-key" onclick="key('1')">1</button>
+    <button class="btn btn-key" onclick="key('2')">2</button>
+    <button class="btn btn-key" onclick="key('3')">3</button>
+    <button class="btn btn-key" onclick="key('4')">4</button>
+    <button class="btn btn-key" onclick="key('5')">5</button>
+    <button class="btn btn-key" onclick="key('6')">6</button>
+    <button class="btn btn-key" onclick="key('7')">7</button>
+    <button class="btn btn-key" onclick="key('8')">8</button>
+    <button class="btn btn-key" onclick="key('9')">9</button>
+    <button class="btn btn-key" onclick="key('.')">.</button>
+    <button class="btn btn-key" onclick="key('0')">0</button>
+    <button class="btn btn-key" onclick="key('/')">/</button>
+   </div>
+  </div>
+  <div class="alpha-pad" id="alpha-btns"></div>
+ </div>
 </div>
 
 <!-- SimBrief panel -->
 <div class="panel">
-    <div class="panel-title">SIMBRIEF UPLINK</div>
-    <div class="row">
-        <input type="text" id="sb-id-input" placeholder="SimBrief username or pilot ID">
-        <button class="panel-btn" onclick="directUplink()">UPLINK</button>
-    </div>
-    <div class="status" id="sb-status">Enter your SimBrief username or numeric pilot ID</div>
+ <div class="panel-title">SIMBRIEF DATALINK</div>
+ <div class="prow">
+  <input id="sb-in" placeholder="SimBrief username or pilot ID" autocomplete="off">
+  <button class="pbtn" onclick="sbUplink()">UPLINK</button>
+ </div>
+ <div class="pstat" id="sb-st">Enter your SimBrief username or numeric pilot ID</div>
 </div>
 
 <!-- Live companion panel -->
 <div class="panel">
-    <div class="panel-title">LIVE SIM CONNECTION — PC ONLY (MSFS 2020/2024)</div>
-    <div class="row">
-        <input type="text" id="ws-ip-input" placeholder="PC IP address  e.g. 192.168.1.50">
-        <button class="panel-btn" id="ws-btn" onclick="toggleLive()">CONNECT</button>
-    </div>
-    <div class="status" id="ws-status">Xbox users: SimBrief uplink only — live connection not available on console</div>
+ <div class="panel-title">LIVE SIM — PC ONLY (MSFS 2020/2024)</div>
+ <div class="prow">
+  <input id="ws-in" placeholder="PC local IP  e.g. 192.168.1.50" autocomplete="off">
+  <button class="pbtn" id="ws-btn" onclick="wsToggle()">CONNECT</button>
+ </div>
+ <div class="pstat" id="ws-st">Xbox/console users: SimBrief uplink only — live connection not available</div>
 </div>
 
 <script>
-    let pad = "", page = "MENU";
-    let flight = {
-        fromTo: "____/____", fltNo: "______", costIdx: "---", crzAlt: "_____/---°",
-        fuel: { block:"---.-", trip:"---.-", altn:"---.-", rteRsv:"---.-", rsvPct:"5.0",
-                final:"---.-", extra:"---.-", taxi:"---.-", zfw:"---.-", tow:"---.-", lw:"---.-" }
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let pad='', padErr=false;
+let page='MENU';
+let brt=80; // brightness 0-100
+
+const FL = {  // flight data
+  fromTo:'____/____', altn:'----', fltNo:'______', costIdx:'---',
+  crzAlt:'_____', tropo:'36090', squawk:'----',
+  perf:{ v1:'---',vr:'---',v2:'---',flaps:'--',ths:'UP0.0',flex:'---',thrRed:'1500',thrAcc:'1500',transAlt:'18000' },
+  fuel:{ block:'---.-',trip:'---.-',altn:'---.-',rteRsv:'---.-',rsvPct:'5.0',final:'---.-',extra:'---.-',taxi:'---.-',zfw:'---.-',tow:'---.-',lw:'---.-' },
+  route:[], // array of waypoint strings from SimBrief
+  atsu:null,
+  aircraft:'A320', engine:'CFM56-5B4', navdb:'2501/2502',
+};
+
+const dirState = { wpt:'', confirmed:false };
+let fpPage=0; // F-PLN scroll page
+
+// live sim
+let live=null, ws=null, wsOk=false;
+
+// ATSU
+let atsuMsg='', atsuWxMsg='';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCRATCHPAD
+// ═══════════════════════════════════════════════════════════════════════════
+const CLEAR_ON_NEXT = ['FORMAT ERROR','OUT OF RANGE','NOT ALLOWED','ENTRY DELETED'];
+
+function key(v){
+  if(padErr||CLEAR_ON_NEXT.includes(pad)){pad='';padErr=false;}
+  pad+=v; draw();
+}
+
+function clr(){
+  if(pad===''){pad='CLR';}
+  else if(pad==='CLR'){pad='';}
+  else{pad=pad.slice(0,-1);}
+  padErr=false; draw();
+}
+
+function err(msg){ pad=msg; padErr=true; draw(); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VALIDATION RULES (real FCOM formats)
+// ═══════════════════════════════════════════════════════════════════════════
+const V = {
+  fromTo: v => /^[A-Z0-9]{3,4}\/[A-Z0-9]{3,4}$/.test(v),
+  icao:   v => /^[A-Z0-9]{3,4}$/.test(v),
+  fltNo:  v => /^[A-Z]{2,3}[0-9]{1,4}[A-Z]?$/.test(v),
+  costIdx:v => /^\d{1,3}$/.test(v) && +v>=0 && +v<=999,
+  fl:     v => (/^FL\d{2,3}$/i.test(v)||/^\d{3,5}$/.test(v)) && (() => {const n=+v.replace(/FL/i,''); return n>=100&&n<=450;})(),
+  tropo:  v => /^\d{4,5}$/.test(v) && +v>=25000 && +v<=60000,
+  vspd:   v => /^\d{3}$/.test(v) && +v>=100 && +v<=199,
+  flaps:  v => ['1','1F','2','3'].includes(v.toUpperCase()),
+  thsVal: v => { const m=v.match(/^(\d|1F|2|3)\/(UP|DN)(\d(\.\d)?)$/i); return !!m && +m[3]<=4.0; },
+  flex:   v => /^\d{1,2}$/.test(v) && +v>=0 && +v<=99,
+  alt4:   v => /^\d{3,5}$/.test(v) && +v>=400 && +v<=15000,
+  transAlt: v => /^\d{4,5}$/.test(v) && +v>=3000 && +v<=20000,
+  waypoint: v => /^[A-Z0-9]{2,7}$/.test(v),
+  zfw:    v => /^\d{2}(\.\d)?$/.test(v) && +v>=30 && +v<=75,
+  squawk: v => /^[0-7]{4}$/.test(v),
+};
+
+function validate(rule,v){
+  if(!pad||pad==='CLR') return false;
+  return V[rule] ? V[rule](v.toUpperCase()) : true;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PAGE NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+function go(p){ page=p; if(p==='FPLN') fpPage=0; draw(); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LSK HANDLER
+// ═══════════════════════════════════════════════════════════════════════════
+function lsk(id){
+  const p=pad, up=p.toUpperCase();
+
+  // — MENU —
+  if(page==='MENU'){
+    if(id==='L1') go('INIT');
+    if(id==='L2') go('ATSU');
+    if(id==='L3') go('AIDS');
+    if(id==='L4') go('CFDS');
+    if(id==='L6') go('SATCOM');
+    return;
+  }
+
+  // — INIT —
+  if(page==='INIT'){
+    if(id==='R1'){ if(!p){return;} if(!V.fromTo(up)){err('FORMAT ERROR');return;} FL.fromTo=up;pad=''; }
+    if(id==='L3'){ if(!p){return;} if(!V.fltNo(up)){err('FORMAT ERROR');return;} FL.fltNo=up;pad=''; }
+    if(id==='L4'){ if(!p){return;} if(!V.costIdx(up)){err('OUT OF RANGE');return;} FL.costIdx=up;pad=''; }
+    if(id==='L5'){ if(!p){return;} const v=up.replace('FL',''); if(!V.fl(up)){err('FORMAT ERROR');return;} FL.crzAlt='FL'+v.replace('FL','');pad=''; }
+    if(id==='L6'){ if(!p){return;} if(!V.tropo(up)){err('OUT OF RANGE');return;} FL.tropo=up;pad=''; }
+    if(id==='R2'){ if(!p){return;} if(!V.icao(up)){err('FORMAT ERROR');return;} FL.altn=up;pad=''; }
+    draw(); return;
+  }
+
+  // — PERF —
+  if(page==='PERF'){
+    if(id==='L1'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} if(+up>+FL.perf.vr&&FL.perf.vr!=='---'){err('OUT OF RANGE');return;} FL.perf.v1=up;pad=''; }
+    if(id==='L2'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} FL.perf.vr=up;pad=''; }
+    if(id==='L3'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} if(+up<+FL.perf.vr&&FL.perf.vr!=='---'){err('OUT OF RANGE');return;} FL.perf.v2=up;pad=''; }
+    if(id==='R3'){ if(!p){return;}
+      // FLAPS/THS: accept "2/UP0.5" or just "2" or "1F/DN0.2"
+      const ths=up.match(/^(1F|1|2|3)\/(UP|DN)(\d(\.\d)?)$/i);
+      const flOnly=up.match(/^(1F|1|2|3)$/i);
+      if(ths){FL.perf.flaps=ths[1].toUpperCase();FL.perf.ths=ths[2].toUpperCase()+ths[3];pad='';}
+      else if(flOnly){FL.perf.flaps=flOnly[1].toUpperCase();pad='';}
+      else{err('FORMAT ERROR');return;}
+    }
+    if(id==='R4'){ if(!p){return;} if(!V.flex(up)){err('OUT OF RANGE');return;} FL.perf.flex=up+'°';pad=''; }
+    if(id==='L4'){ if(!p){return;} if(!V.alt4(up)){err('OUT OF RANGE');return;} FL.perf.thrRed=up;pad=''; }
+    if(id==='L5'){ if(!p){return;} if(!V.alt4(up)){err('OUT OF RANGE');return;} if(+up<+FL.perf.thrRed){err('OUT OF RANGE');return;} FL.perf.thrAcc=up;pad=''; }
+    if(id==='R5'){ if(!p){return;} if(!V.transAlt(up)){err('OUT OF RANGE');return;} FL.perf.transAlt=up;pad=''; }
+    draw(); return;
+  }
+
+  // — DIR —
+  if(page==='DIR'){
+    if(id==='L1'){
+      if(!p){dirState.wpt='';dirState.confirmed=false;draw();return;}
+      if(!V.waypoint(up)){err('FORMAT ERROR');return;}
+      dirState.wpt=up;dirState.confirmed=false;pad='';draw();return;
+    }
+    // Select from route list (L2-L6)
+    const listIdx={'L2':0,'L3':1,'L4':2,'L5':3,'L6':4};
+    if(listIdx[id]!==undefined){
+      const visible=FL.route.slice(0,5);
+      const wpt=visible[listIdx[id]];
+      if(wpt){dirState.wpt=wpt;dirState.confirmed=false;draw();return;}
+    }
+    if(id==='R5'&&dirState.wpt){dirState.confirmed=false;dirState.wpt='';draw();return;} // ERASE
+    if(id==='R6'&&dirState.wpt){dirState.confirmed=true;draw();return;} // DIRECT*
+    draw(); return;
+  }
+
+  // — F-PLN —
+  if(page==='FPLN'){
+    if(id==='R6'&&pad==='CLR'){ pad=''; draw(); return; }
+    if(id==='L6'){ fpPage=Math.max(0,fpPage-1);draw();return; }
+    if(id==='R5'){ fpPage=fpPage+1;draw();return; }
+    draw(); return;
+  }
+
+  // — DATA subpages —
+  if(page==='DATA'){ if(id==='L1') go('DATA_STATUS'); if(id==='L2') go('DATA_POS'); if(id==='L3') go('DATA_GPS'); if(id==='R6') go('MENU'); draw();return; }
+  if(['DATA_STATUS','DATA_POS','DATA_GPS'].includes(page)){ if(id==='R6') go('DATA');draw();return; }
+
+  // — ATSU tree —
+  if(page==='ATSU'){ if(id==='L1') go('ATSU_AOC'); if(id==='L2') go('ATSU_ATC'); if(id==='R6') go('MENU'); draw();return; }
+  if(page==='ATSU_AOC'){
+    if(id==='L1'){atsuRequestOFP();return;}
+    if(id==='L2'){atsuRequestWX();return;}
+    if(id==='R6') go('ATSU');draw();return;
+  }
+  if(page==='ATSU_ATC'){ if(id==='R6') go('ATSU');draw();return; }
+
+  // — AIDS —
+  if(page==='AIDS'){ if(id==='L1') go('AIDS_ENG'); if(id==='L2') go('AIDS_APU'); if(id==='R6') go('MENU'); draw();return; }
+  if(['AIDS_ENG','AIDS_APU'].includes(page)){ if(id==='R6') go('AIDS');draw();return; }
+
+  // — CFDS —
+  if(page==='CFDS'){ if(id==='L1') go('CFDS_LLR'); if(id==='L2') go('CFDS_PFR'); if(id==='L3') go('CFDS_SYS'); if(id==='R6') go('MENU'); draw();return; }
+  if(['CFDS_LLR','CFDS_PFR','CFDS_SYS'].includes(page)){ if(id==='R6') go('CFDS');draw();return; }
+
+  // — SATCOM —
+  if(page==='SATCOM'){ if(id==='R6') go('MENU');draw();return; }
+
+  // — BRT —
+  if(page==='BRT'){
+    if(id==='L3'){ brt=Math.min(100,brt+10); applyBrt(); }
+    if(id==='L4'){ brt=Math.max(10,brt-10); applyBrt(); }
+    draw(); return;
+  }
+
+  draw();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BRIGHTNESS
+// ═══════════════════════════════════════════════════════════════════════════
+function applyBrt(){
+  const b=brt/100;
+  document.getElementById('screen-bg').style.background=`rgba(0,0,0,${1-b*0.3})`;
+  document.querySelectorAll('.G,.C,.A,.W,.vr span,.lr span').forEach(el=>{el.style.opacity=0.6+b*0.4;});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SIMBRIEF UPLINK
+// ═══════════════════════════════════════════════════════════════════════════
+function setSbSt(m,c){const e=document.getElementById('sb-st');e.textContent=m;e.style.color=c||'#666';}
+
+async function sbUplink(){
+  const raw=document.getElementById('sb-in').value.trim();
+  if(!raw){setSbSt('Enter a SimBrief username or pilot ID','var(--amb)');return;}
+  pad='UPLINKING…';draw();setSbSt('Contacting SimBrief…','var(--cyn)');
+  const isNum=/^\d+$/.test(raw);
+  const url=`https://www.simbrief.com/api/xml.fetcher.php?${isNum?'userid':'username'}=${raw}&json=1`;
+  try{
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(d.fetch&&d.fetch.status==='Error'){pad='NO OFP';setSbSt('No flight plan found for this user','var(--amb)');draw();return;}
+    if(!d.origin||!d.destination) throw new Error('Bad data');
+
+    FL.fromTo=`${d.origin.icao_code}/${d.destination.icao_code}`.toUpperCase();
+    FL.altn  =(d.alternate&&d.alternate.icao_code)||'----';
+    FL.fltNo =(d.general.icao_airline+d.general.flight_number).toUpperCase();
+    FL.costIdx=String(d.general.costindex??d.general.cost_index??'---');
+    const flNum=Math.round(parseInt(d.general.initial_altitude)/100);
+    FL.crzAlt='FL'+flNum;
+    FL.aircraft=(d.aircraft&&d.aircraft.icaocode)||'A320';
+    FL.engine=(d.aircraft&&d.aircraft.name)||'CFM56-5B4';
+
+    const kg=v=>v?(parseInt(v)/1000).toFixed(1):'---.-';
+    const f=d.fuel||{};
+    FL.fuel.block =kg(f.plan_ramp);  FL.fuel.trip  =kg(f.plan_trip);
+    FL.fuel.altn  =kg(f.plan_altn);  FL.fuel.rteRsv=kg(f.plan_contingency);
+    FL.fuel.rsvPct=f.cont_rule?parseFloat(f.cont_rule).toFixed(1):'5.0';
+    FL.fuel.final =kg(f.plan_reserve);FL.fuel.extra =kg(f.plan_extra);
+    FL.fuel.taxi  =kg(f.plan_taxi);
+    const w=d.weights||{};
+    FL.fuel.zfw=kg(w.est_zfw); FL.fuel.tow=kg(w.est_tow); FL.fuel.lw=kg(w.est_ldw);
+
+    // Route waypoints from SimBrief route string
+    if(d.general&&d.general.route){
+      FL.route=d.general.route.trim().split(/\s+/).filter(w=>/^[A-Z0-9]{2,7}$/.test(w));
+    }
+
+    // ATSU extra fields
+    FL.atsu={
+      depIcao:d.origin.icao_code, arrIcao:d.destination.icao_code,
+      altnIcao:(d.alternate&&d.alternate.icao_code)||'----',
+      depTime:(d.times&&d.times.sched_out)||'----',
+      arrTime:(d.times&&d.times.sched_in)||'----',
+      route:d.general.route||'', aircraft:FL.aircraft,
     };
 
-    // Live sim data — populated by WebSocket when companion is connected
-    let live = null;
-    let ws = null;
-    let wsConnected = false;
+    pad='UPLINK OK'; setSbSt(`✓ ${FL.fltNo}  ${FL.fromTo}  ${FL.crzAlt}`,'var(--grn)');
+  }catch(e){
+    pad='UPLINK ERR'; setSbSt('Error: '+(e.message.includes('fetch')?'Network error':e.message),'var(--red)');
+  }
+  draw();
+}
 
-    // ── WebSocket / live connection ──────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// WEBSOCKET LIVE
+// ═══════════════════════════════════════════════════════════════════════════
+function setWsSt(m,c){const e=document.getElementById('ws-st');e.textContent=m;e.style.color=c||'#666';}
 
-    function toggleLive() {
-        if (wsConnected) {
-            disconnectLive();
-        } else {
-            connectLive();
-        }
+function wsToggle(){wsOk?wsDc():wsCon();}
+
+function wsCon(){
+  const ip=document.getElementById('ws-in').value.trim();
+  if(!ip){setWsSt('Enter your PC IP address','var(--amb)');return;}
+  setWsSt('Connecting…','var(--cyn)');
+  try{ws=new WebSocket(`ws://${ip}:8765`);}catch(e){setWsSt('Invalid address','var(--red)');return;}
+  ws.onopen=()=>{
+    wsOk=true;
+    document.getElementById('ws-btn').textContent='DISCONNECT';
+    document.getElementById('ws-btn').classList.add('live');
+    document.getElementById('live-dot').classList.add('on');
+    setWsSt(`Connected — live data active`,'var(--grn)');draw();
+  };
+  ws.onmessage=e=>{try{const d=JSON.parse(e.data);live=d.connected?d:null;if(['PROG','FUEL','AIDS_ENG'].includes(page))draw();}catch{}};
+  ws.onclose=()=>{wsOk=false;live=null;document.getElementById('ws-btn').textContent='CONNECT';document.getElementById('ws-btn').classList.remove('live');document.getElementById('live-dot').classList.remove('on');setWsSt('Disconnected','var(--red)');draw();};
+  ws.onerror=()=>setWsSt(`Cannot reach ${ip}:8765 — companion running?`,'var(--red)');
+}
+function wsDc(){if(ws)ws.close();}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ATSU ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+async function atsuRequestOFP(){
+  const raw=document.getElementById('sb-in').value.trim();
+  if(!raw){atsuMsg='NO PILOT ID';draw();return;}
+  atsuMsg='REQUESTING…';draw();
+  // reuse main uplink logic
+  await sbUplink();
+  atsuMsg=pad==='UPLINK OK'?'OFP LOADED':'UPLINK FAIL';
+  draw();
+}
+
+async function atsuRequestWX(){
+  const dep=FL.atsu?FL.atsu.depIcao:FL.fromTo.split('/')[0];
+  if(!dep||dep==='____'){atsuWxMsg='NO DEP ARPT';draw();return;}
+  atsuWxMsg='FETCHING WX…';draw();
+  try{
+    const r=await fetch(`https://aviationweather.gov/api/data/metar?ids=${dep}&format=json`);
+    const d=await r.json();
+    atsuWxMsg=(d&&d[0]&&d[0].rawOb)||'NO WX DATA';
+  }catch{atsuWxMsg='WX UNAVAIL';}
+  draw();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+function fmt(v,dp=0,sfx=''){return(v==null||v===undefined)?'---':Number(v).toFixed(dp)+sfx;}
+function hdg(v){return v==null?'---':String(Math.round(v)).padStart(3,'0');}
+const nc=(v,sfx='')=>(!wsOk||!live)?'- - -':fmt(v,0,sfx);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DRAW ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+const TITLES={
+  MENU:'MCDU MENU',INIT:'INIT  1/2',FUEL:'FUEL PRED',PROG:'PROG',
+  PERF:'PERF  T/O',DIR:'DIR TO',FPLN:'F-PLN',DATA:'DATA INDEX',BRT:'MCDU BRT/DIM',
+  DATA_STATUS:'A/C STATUS',DATA_POS:'POS MONITOR',DATA_GPS:'GPS MONITOR',
+  ATSU:'ATSU',ATSU_AOC:'AOC MENU',ATSU_ATC:'ATC COMM',
+  AIDS:'AIDS',AIDS_ENG:'AIDS  ENG',AIDS_APU:'AIDS  APU',
+  CFDS:'CFDS',CFDS_LLR:'LAST LEG RPT',CFDS_PFR:'POST FLT RPT',CFDS_SYS:'SYS RPT/TEST',
+  SATCOM:'SATCOM',RAD:'RAD NAV',SEC:'SEC F-PLN',ATC:'ATC COMM',
+};
+
+function draw(){
+  document.getElementById('ttl').textContent=TITLES[page]||page;
+  const sp=document.getElementById('sp');
+  // AOC WX overrides scratchpad
+  if(page==='ATSU_AOC'&&atsuWxMsg){sp.textContent=atsuWxMsg.slice(0,26);}
+  else{sp.textContent=pad;}
+  sp.className=padErr?'err':'ok';
+
+  switch(page){
+  case 'MENU':
+    R(1,'','','&lt;FMGC','REQ>','G','W');
+    R(2,'','','&lt;ATSU','','G','');
+    R(3,'','','&lt;AIDS','','G','');
+    R(4,'','','&lt;CFDS','','G','');
+    R(5,'','','','','','');
+    R(6,'','','&lt;SATCOM','','G',''); break;
+
+  case 'INIT':
+    R(1,'CO RTE','FROM/TO','NONE',FL.fromTo,'W','C');
+    R(2,'ALTN/CO RTE','ALTN',FL.atsu?FL.atsu.altnIcao:'----',FL.altn||'----','W','C');
+    R(3,'FLT NBR','',FL.fltNo,'','C','');
+    R(4,'COST INDEX','',FL.costIdx,'','C','');
+    R(5,'CRZ FL/TEMP','',FL.crzAlt+'/---°','','C','');
+    R(6,'TROPO','','',FL.tropo,'','C'); break;
+
+  // ── PERF TAKEOFF ─────────────────────────────────────────────────────
+  case 'PERF':{
+    const pf=FL.perf;
+    R(1,'V1','',pf.v1,'','C','');
+    R(2,'VR','',pf.vr,'','C','');
+    R(3,'V2','FLAPS/THS',pf.v2,pf.flaps+'/'+pf.ths,'C','C');
+    R(4,'THR RED/ACC','FLEX TO',pf.thrRed+'/'+pf.thrAcc,pf.flex,'C','C');
+    R(5,'TRANS ALT','',pf.transAlt,'','C','');
+    R(6,'','','','','',''); break;
+  }
+
+  // ── DIR TO ───────────────────────────────────────────────────────────
+  case 'DIR':{
+    const dw=dirState.wpt;
+    R(1,'DIR TO   ←TYPE OR SELECT','',dw?dw:'[     ]','','C','');
+    const vis=FL.route.length?FL.route.slice(0,5):['- - -','- - -','- - -','- - -','- - -'];
+    R(2,'',vis[0]||'','','','','C');
+    R(3,'',vis[1]||'','','','','C');
+    R(4,'',vis[2]||'','','','','C');
+    R(5,'',vis[3]||'','','','','C');
+    if(dw){
+      R(6,'','','&lt;ERASE','DIRECT*>','A','A');
+    } else {
+      R(6,'',vis[4]||'','','','','C');
     }
-
-    function connectLive() {
-        const ip = document.getElementById('ws-ip-input').value.trim();
-        if (!ip) { setWsStatus('Enter your PC\'s IP address first', '#ff9d00'); return; }
-
-        setWsStatus('Connecting...', '#00ffff');
-
-        try {
-            ws = new WebSocket(`ws://${ip}:8765`);
-        } catch (e) {
-            setWsStatus('Invalid IP address', '#ff4444');
-            return;
-        }
-
-        ws.onopen = () => {
-            wsConnected = true;
-            document.getElementById('ws-btn').textContent = 'DISCONNECT';
-            document.getElementById('ws-btn').classList.add('active');
-            document.getElementById('live-dot').classList.add('connected');
-            setWsStatus(`Connected to ${ip}:8765 — receiving live sim data`, '#00ff00');
-            draw();
-        };
-
-        ws.onmessage = (evt) => {
-            try {
-                const data = JSON.parse(evt.data);
-                if (data.connected) {
-                    live = data;
-                } else {
-                    live = null;
-                    setWsStatus('Companion connected but sim not running', '#ff9d00');
-                }
-                // If on a live page, redraw with new data
-                if (['PROG', 'FUEL'].includes(page)) draw();
-            } catch (e) {}
-        };
-
-        ws.onclose = () => {
-            wsConnected = false;
-            live = null;
-            document.getElementById('ws-btn').textContent = 'CONNECT';
-            document.getElementById('ws-btn').classList.remove('active');
-            document.getElementById('live-dot').classList.remove('connected');
-            setWsStatus('Disconnected — companion app not running?', '#ff4444');
-            draw();
-        };
-
-        ws.onerror = () => {
-            setWsStatus(`Could not connect to ${ip}:8765 — is the companion app running?`, '#ff4444');
-        };
+    if(dirState.confirmed){
+      R(1,'DIR TO   ✓ ACTIVE','',dw,'','G','');
     }
+    break;
+  }
 
-    function disconnectLive() {
-        if (ws) ws.close();
+  // ── F-PLN ────────────────────────────────────────────────────────────
+  case 'FPLN':{
+    const dep=FL.fromTo.split('/')[0]||'----';
+    const arr=FL.fromTo.split('/')[1]||'----';
+    if(!FL.route.length){
+      R(1,'ORIGIN','DEST',dep,arr,'C','C');
+      R(2,'','','- - NO ROUTE - -','','A','');
+      R(3,'','','UPLINK SIMBRIEF','','X','');
+      R(4,'','','OR ENTER INIT','','X','');
+      R(5,'','','FROM/TO FIRST','','X','');
+      R(6,'','','','','','');
+    } else {
+      const wpts=[dep,...FL.route,arr];
+      const start=fpPage*4;
+      const slice=wpts.slice(start,start+6);
+      R(1,'F-PLN '+(fpPage+1)+'/'+Math.ceil(wpts.length/4),'',slice[0]||'','','C','');
+      R(2,'',slice[1]||'','','','','C');
+      R(3,'',slice[2]||'','','','','C');
+      R(4,'',slice[3]||'','','','','C');
+      R(5,'',slice[4]||'','','','','C');
+      R(6,'↑PREV','NEXT↓',start>0?'&lt;PREV PAGE':'','MORE>','W','W');
     }
+    break;
+  }
 
-    function setWsStatus(msg, color) {
-        const el = document.getElementById('ws-status');
-        el.textContent = msg;
-        el.style.color = color || '#aaa';
-    }
+  // ── FUEL PRED ────────────────────────────────────────────────────────
+  case 'FUEL':{
+    const fu=FL.fuel;
+    const fob=(wsOk&&live)?live.fuelTonnes:fu.block;
+    const fc=(wsOk&&live)?'G':'C';
+    R(1,'FOB'+(wsOk?' [LIVE]':''),'GW/CG',fob,'---.-/--.-',fc,'G');
+    R(2,'DEST EFOB','TIME',fu.trip,'----','C','G');
+    R(3,'ALTN EFOB','TIME',fu.altn,'----','C','G');
+    R(4,'RTE RSV/%','',fu.rteRsv+'/'+fu.rsvPct,'','C','');
+    R(5,'FINAL/TIME','MIN DEST FOB',fu.final+'/0030','---.-','C','A');
+    R(6,'EXTRA/TIME','ZFW',fu.extra+'/----',fu.zfw,'G','C'); break;
+  }
 
-    // ── SimBrief uplink ──────────────────────────────────────────────────────
+  // ── PROG ─────────────────────────────────────────────────────────────
+  case 'PROG':
+    if(!wsOk||!live){
+      R(1,'AIRSPEED','ALTITUDE','NOT','CONNECTED','A','A');
+      R(2,'HDG','V/S','NOT','CONNECTED','A','A');
+      R(3,'FOB','','NOT CONNECTED','','A','');
+      R(4,'AP ALT','AP HDG','NOT','CONNECTED','A','A');
+      R(5,'AP SPD','AP STATE','NOT','CONNECTED','A','A');
+      R(6,'ENG1 N1','ENG2 N1','NOT','CONNECTED','A','A');
+    } else {
+      const L=live, ap=L.apMaster?'AP ON':'AP OFF', ac=L.apMaster?'G':'A';
+      const vs=(L.vs>=0?'+':'')+Math.round(L.vs);
+      R(1,'AIRSPEED','ALTITUDE',fmt(L.ias,0,'KT'),fmt(L.altitude,0,'FT'),'G','G');
+      R(2,'HDG','V/S',hdg(L.heading)+'°',vs+'FPM','G','G');
+      R(3,'FOB [LIVE]','',L.fuelTonnes+'T','','G','');
+      R(4,'AP ALT','AP HDG',fmt(L.apAltitude,0,'FT'),hdg(L.apHeading)+'°','C','C');
+      R(5,'AP SPD','',fmt(L.apSpeed,0,'KT'),ap,'C',ac);
+      R(6,'ENG1 N1','ENG2 N1',fmt(L.n1Eng1,1,'%'),fmt(L.n1Eng2,1,'%'),'G','G');
+    } break;
 
-    function key(v) {
-        if (["SUCCESS","NO FLIGHT","UPLINK ERR","UPLINKING"].includes(pad)) pad = "";
-        pad += v; draw();
-    }
+  // ── BRT ──────────────────────────────────────────────────────────────
+  case 'BRT':
+    R(1,'','','BRIGHTNESS','','W','');
+    R(2,'','','','','','');
+    R(3,'','','','','','');
+    setRowHTML(3,`<div class="lr"></div><div class="vr" style="padding:4px 0"><div id="brt-bar" style="flex:1;height:14px;background:#333;border-radius:3px;cursor:pointer" onclick="brtClick(event)"><div id="brt-fill" style="height:100%;background:var(--grn);border-radius:3px;width:${brt}%"></div></div></div>`);
+    R(4,'INCREASE ▲','',brt+'%','','G','');
+    R(5,'DECREASE ▼','','','','A','');
+    R(6,'','','','','',''); break;
 
-    function setPage(p) { page = p; draw(); }
+  // ── DATA INDEX ───────────────────────────────────────────────────────
+  case 'DATA':
+    R(1,'','','&lt;A/C STATUS','','G','');
+    R(2,'','','&lt;POS MONITOR','','G','');
+    R(3,'','','&lt;GPS MONITOR','','G','');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
 
-    function setStatus(msg, color) {
-        const el = document.getElementById('sb-status');
-        el.textContent = msg;
-        el.style.color = color || '#aaa';
-    }
+  case 'DATA_STATUS':
+    R(1,'ACFT TYPE','ENGINE',FL.aircraft,FL.engine,'C','C');
+    R(2,'FLT NBR','DATE',FL.fltNo,new Date().toISOString().slice(0,10),'C','W');
+    R(3,'NAV DB','','',FL.navdb,'','W');
+    R(4,'','','','','','');
+    R(5,'IDLE','ENG OUT','---','---','C','C');
+    R(6,'','','','RETURN>','','W'); break;
 
-    async function directUplink() {
-        const raw = document.getElementById('sb-id-input').value.trim();
-        if (!raw) { setStatus('Enter a SimBrief username or pilot ID', '#ff9d00'); return; }
+  case 'DATA_POS':
+    R(1,'FMGC 1','FMGC 2','---°N/---°E','---°N/---°E','C','C');
+    R(2,'MIX IRS','',wsOk&&live?fmt(live.altitude,0)+'FT ALT':'---°N/---°E','','G','');
+    R(3,'IRS 1','IRS 2','NAV','NAV','G','G');
+    R(4,'GPS 1','GPS 2','3D/NAV','3D/NAV','G','G');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
 
-        pad = "UPLINKING"; draw();
-        setStatus('Connecting to SimBrief...', '#00ffff');
+  case 'DATA_GPS':
+    R(1,'GPS 1','GPS 2',wsOk&&live?'3D NAV':'NO DATA',wsOk&&live?'3D NAV':'NO DATA',(wsOk&&live)?'G':'A',(wsOk&&live)?'G':'A');
+    R(2,'SATS USED','HDOP',wsOk&&live?'8':'--',wsOk&&live?'0.9':'--',(wsOk&&live)?'G':'A',(wsOk&&live)?'G':'A');
+    R(3,'','','','','','');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
 
-        const isNumeric = /^\d+$/.test(raw);
-        const param = isNumeric ? `userid=${raw}` : `username=${raw}`;
-        const url = `https://www.simbrief.com/api/xml.fetcher.php?${param}&json=1`;
+  // ── ATSU ─────────────────────────────────────────────────────────────
+  case 'ATSU':
+    R(1,'','','&lt;AOC MENU','','G','');
+    R(2,'','','&lt;ATC COMM','','G','');
+    R(3,'','','','','',''); R(4,'','','','','',''); R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
 
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const d = await response.json();
+  case 'ATSU_AOC':{
+    const loaded=!!FL.atsu;
+    R(1,'FLT NBR','OFP','&lt;INIT DATA REQ*',loaded?FL.fltNo:'------','A',loaded?'G':'A');
+    R(2,'','','&lt;WX REQUEST*','','G','');
+    R(3,'ROUTE','',loaded?FL.fromTo:'------/------','',loaded?'C':'A','');
+    R(4,'DEP','ARR',FL.atsu?FL.atsu.depTime:'----',FL.atsu?FL.atsu.arrTime:'----','C','C');
+    R(5,'ALTN','',FL.atsu?FL.atsu.altnIcao:'----','','C','');
+    R(6,atsuMsg||'','','','RETURN>','G','W'); break;
+  }
 
-            if (d.fetch && d.fetch.status === 'Error') {
-                pad = "NO FLIGHT";
-                setStatus('No active flight plan found for this user', '#ff9d00');
-                draw(); return;
-            }
-            if (!d.origin || !d.destination) throw new Error('Missing flight data');
+  case 'ATSU_ATC':
+    R(1,'ACTIVE ATC','','--------','','A','');
+    R(2,'ATC 1','','--------','','C','');
+    R(3,'ATC 2','','--------','','C','');
+    R(4,'','','','','','');
+    R(5,'','DATALINK','','STBY','','A');
+    R(6,'','','','RETURN>','','W'); break;
 
-            flight.fromTo  = `${d.origin.icao_code}/${d.destination.icao_code}`.toUpperCase();
-            flight.fltNo   = `${d.general.icao_airline}${d.general.flight_number}`.toUpperCase();
-            flight.costIdx = d.general.costindex ?? d.general.cost_index ?? '---';
-            const fl = Math.round(parseInt(d.general.initial_altitude) / 100);
-            flight.crzAlt  = `FL${fl}/---°`;
+  // ── AIDS ─────────────────────────────────────────────────────────────
+  case 'AIDS':
+    R(1,'','','&lt;ENGINE REPORT','','G','');
+    R(2,'','','&lt;APU REPORT','','G','');
+    R(3,'','','','','',''); R(4,'','','','','',''); R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
 
-            const kg = (v) => v ? (parseInt(v) / 1000).toFixed(1) : '---.-';
-            const f = d.fuel || {};
-            flight.fuel.block  = kg(f.plan_ramp);
-            flight.fuel.trip   = kg(f.plan_trip);
-            flight.fuel.altn   = kg(f.plan_altn);
-            flight.fuel.rteRsv = kg(f.plan_contingency);
-            flight.fuel.rsvPct = f.cont_rule ? parseFloat(f.cont_rule).toFixed(1) : '5.0';
-            flight.fuel.final  = kg(f.plan_reserve);
-            flight.fuel.extra  = kg(f.plan_extra);
-            flight.fuel.taxi   = kg(f.plan_taxi);
-            flight.fuel.zfw    = kg(d.weights ? d.weights.est_zfw : null);
-            flight.fuel.tow    = kg(d.weights ? d.weights.est_tow : null);
-            flight.fuel.lw     = kg(d.weights ? d.weights.est_ldw : null);
+  case 'AIDS_ENG':{
+    const e1=(wsOk&&live)?fmt(live.n1Eng1,1,'%'):'---.-';
+    const e2=(wsOk&&live)?fmt(live.n1Eng2,1,'%'):'---.-';
+    const sc=(wsOk&&live)?'G':'A';
+    R(1,'ENG 1 N1','ENG 2 N1',e1,e2,sc,sc);
+    R(2,'ENG 1 EGT','ENG 2 EGT','---°C','---°C',sc,sc);
+    R(3,'ENG 1 FF','ENG 2 FF','---KG/H','---KG/H',sc,sc);
+    R(4,'TOW','ZFW',FL.fuel.tow+'T',FL.fuel.zfw+'T','C','C');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+  }
 
-            pad = "SUCCESS";
-            setStatus(`Uplinked: ${flight.fltNo}  ${flight.fromTo}`, '#00ff00');
+  case 'AIDS_APU':
+    R(1,'APU N1','','---.-','','A','');
+    R(2,'APU EGT','','---°C','','A','');
+    R(3,'APU FF','','---KG/H','','A','');
+    R(4,'APU HRS','','------','','C','');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
 
-        } catch (e) {
-            pad = "UPLINK ERR";
-            setStatus(e.message.includes('fetch') ? 'Network error — check browser allows cross-origin' : `Error: ${e.message}`, '#ff4444');
-            console.error('SimBrief uplink failed:', e);
-        }
-        draw();
-    }
+  // ── CFDS ─────────────────────────────────────────────────────────────
+  case 'CFDS':
+    R(1,'','','&lt;LAST LEG RPT','','G','');
+    R(2,'','','&lt;POST FLT RPT','','G','');
+    R(3,'','','&lt;SYS RPT/TEST','','G','');
+    R(4,'','','','','',''); R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
 
-    // ── LSK handling ─────────────────────────────────────────────────────────
+  case 'CFDS_LLR':{
+    const f=FL.fltNo!=='______'?FL.fltNo:'NO FLT NBR';
+    R(1,'FLT NBR','DATE',f,new Date().toISOString().slice(0,10),'W','W');
+    R(2,'SYSTEMS','','NO FAULTS','','G','');
+    R(3,'ECAM','','NO WARNINGS','','G','');
+    R(4,'CLASS 1','','NONE','','G','');
+    R(5,'CLASS 2','','NONE','','G','');
+    R(6,'','','','RETURN>','','W'); break;
+  }
 
-    function pressLSK(id) {
-        // MENU navigation
-        if (page === 'MENU') {
-            if (id === 'L1') setPage('INIT');
-            if (id === 'L2') setPage('ATSU');
-            if (id === 'L3') setPage('AIDS');
-            if (id === 'L4') setPage('CFDS');
-            if (id === 'L6') setPage('SATCOM');
-        }
+  case 'CFDS_PFR':{
+    const f=FL.fltNo!=='______'?FL.fltNo:'NO FLT NBR';
+    const rt=FL.fromTo!=='____/____'?FL.fromTo:'----/----';
+    R(1,'FLT NBR','ROUTE',f,rt,'W','W');
+    R(2,'BLOCK FUEL','',FL.fuel.block+'T','','C','');
+    R(3,'TRIP FUEL','',FL.fuel.trip+'T','','C','');
+    R(4,'ZFW','TOW',FL.fuel.zfw+'T',FL.fuel.tow+'T','C','C');
+    R(5,'STATUS','','NO FAULTS','','G','');
+    R(6,'','','','RETURN>','','W'); break;
+  }
 
-        // INIT data entry
-        if (page === 'INIT') {
-            if (!pad || ["SUCCESS","NO FLIGHT","UPLINK ERR","UPLINKING"].includes(pad)) return;
-            if (id === 'R1') flight.fromTo = pad;
-            if (id === 'L3') flight.fltNo  = pad;
-            if (id === 'L4') flight.costIdx = pad;
-            if (id === 'L5') flight.crzAlt  = pad;
-            pad = "";
-        }
+  case 'CFDS_SYS':
+    R(1,'','FWC','','NORMAL','','G');
+    R(2,'','FADEC1','','NORMAL','','G');
+    R(3,'','FADEC2','','NORMAL','','G');
+    R(4,'','FMGC1','','NORMAL','','G');
+    R(5,'','FMGC2','','NORMAL','','G');
+    R(6,'','','','RETURN>','','W'); break;
 
-        // ATSU — AOC subpage navigation
-        if (page === 'ATSU') {
-            if (id === 'L1') setPage('ATSU_AOC');
-            if (id === 'L2') setPage('ATSU_ATC');
-            if (id === 'R6') setPage('MENU');
-        }
-        if (page === 'ATSU_AOC') {
-            if (id === 'L1') atsuRequestOFP();
-            if (id === 'L2') atsuRequestWX();
-            if (id === 'R6') setPage('ATSU');
-        }
-        if (page === 'ATSU_ATC') {
-            if (id === 'R6') setPage('ATSU');
-        }
+  // ── SATCOM ───────────────────────────────────────────────────────────
+  case 'SATCOM':
+    R(1,'SATCOM STATUS','','STBY','','A','');
+    R(2,'CHANNEL','','------','','C','');
+    R(3,'GES ID','','------','','C','');
+    R(4,'SIGNAL','','------','','C','');
+    R(5,'DATALINK','','NOT AVAIL','','A','');
+    R(6,'','','','RETURN>','','W'); break;
 
-        // AIDS subpages
-        if (page === 'AIDS') {
-            if (id === 'L1') setPage('AIDS_ENG');
-            if (id === 'L2') setPage('AIDS_APU');
-            if (id === 'R6') setPage('MENU');
-        }
-        if (page === 'AIDS_ENG' || page === 'AIDS_APU') {
-            if (id === 'R6') setPage('AIDS');
-        }
+  // ── RAD NAV ──────────────────────────────────────────────────────────
+  case 'RAD':
+    R(1,'VOR1/FREQ','VOR2/FREQ','------','------','C','C');
+    R(2,'CRS','CRS','---°','---°','C','C');
+    R(3,'ILS/FREQ','','------','','C','');
+    R(4,'CRS','','---°','','C','');
+    R(5,'ADF1/FREQ','ADF2/FREQ','------','------','C','C');
+    R(6,'','','','','',''); break;
 
-        // CFDS subpages
-        if (page === 'CFDS') {
-            if (id === 'L1') setPage('CFDS_LLR');
-            if (id === 'L2') setPage('CFDS_PFR');
-            if (id === 'L3') setPage('CFDS_SYS');
-            if (id === 'R6') setPage('MENU');
-        }
-        if (page === 'CFDS_LLR' || page === 'CFDS_PFR' || page === 'CFDS_SYS') {
-            if (id === 'R6') setPage('CFDS');
-        }
+  // ── SEC F-PLN ────────────────────────────────────────────────────────
+  case 'SEC':
+    R(1,'SEC FROM/TO','',FL.fromTo,'','X','');
+    R(2,'','','','','','');
+    R(3,'','','COPY ACTIVE*','','A','');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','','','','',''); break;
 
-        // SATCOM
-        if (page === 'SATCOM') {
-            if (id === 'R6') setPage('MENU');
-        }
+  // ── ATC (shortcut key) ───────────────────────────────────────────────
+  case 'ATC': go('ATSU_ATC'); break;
 
-        draw();
-    }
+  default:
+    for(let i=1;i<=6;i++) R(i,'','','','','','');
+    R(3,'','PAGE UNDER','','CONSTRUCTION','','A'); break;
+  }
+}
 
-    // ── ATSU actions ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// ROW RENDERING
+// ═══════════════════════════════════════════════════════════════════════════
+function R(n,l1,l2,v1,v2,c1,c2){
+  document.getElementById('r'+n).innerHTML=
+    `<div class="lr"><span>${l1}</span><span>${l2}</span></div>`+
+    `<div class="vr"><span class="${c1}">${v1}</span><span class="${c2}">${v2}</span></div>`;
+}
+function setRowHTML(n,html){ document.getElementById('r'+n).innerHTML=html; }
 
-    let atsuMsg = "";
-    let atsuWxMsg = "";
+// ═══════════════════════════════════════════════════════════════════════════
+// BRT CLICK ON BAR
+// ═══════════════════════════════════════════════════════════════════════════
+function brtClick(e){
+  const bar=document.getElementById('brt-bar');
+  const rect=bar.getBoundingClientRect();
+  brt=Math.round(((e.clientX-rect.left)/rect.width)*100);
+  brt=Math.max(10,Math.min(100,brt));
+  applyBrt(); draw();
+}
 
-    async function atsuRequestOFP() {
-        const raw = document.getElementById('sb-id-input').value.trim();
-        if (!raw) { atsuMsg = "NO PILOT ID"; draw(); return; }
-        atsuMsg = "REQUESTING...";
-        draw();
-        try {
-            const isNumeric = /^\d+$/.test(raw);
-            const param = isNumeric ? `userid=${raw}` : `username=${raw}`;
-            const url = `https://www.simbrief.com/api/xml.fetcher.php?${param}&json=1`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const d = await response.json();
-            if (d.fetch && d.fetch.status === 'Error') { atsuMsg = "NO OFP FOUND"; draw(); return; }
-            if (!d.origin || !d.destination) throw new Error('Bad data');
-            // Load into flight object (same as direct uplink)
-            flight.fromTo  = `${d.origin.icao_code}/${d.destination.icao_code}`.toUpperCase();
-            flight.fltNo   = `${d.general.icao_airline}${d.general.flight_number}`.toUpperCase();
-            flight.costIdx = d.general.costindex ?? d.general.cost_index ?? '---';
-            const fl = Math.round(parseInt(d.general.initial_altitude) / 100);
-            flight.crzAlt  = `FL${fl}/---°`;
-            const kg = (v) => v ? (parseInt(v) / 1000).toFixed(1) : '---.-';
-            const f = d.fuel || {};
-            flight.fuel.block  = kg(f.plan_ramp);
-            flight.fuel.trip   = kg(f.plan_trip);
-            flight.fuel.altn   = kg(f.plan_altn);
-            flight.fuel.rteRsv = kg(f.plan_contingency);
-            flight.fuel.rsvPct = f.cont_rule ? parseFloat(f.cont_rule).toFixed(1) : '5.0';
-            flight.fuel.final  = kg(f.plan_reserve);
-            flight.fuel.extra  = kg(f.plan_extra);
-            flight.fuel.taxi   = kg(f.plan_taxi);
-            flight.fuel.zfw    = kg(d.weights ? d.weights.est_zfw : null);
-            flight.fuel.tow    = kg(d.weights ? d.weights.est_tow : null);
-            flight.fuel.lw     = kg(d.weights ? d.weights.est_ldw : null);
-            // Store extra ATSU fields
-            flight.atsu = {
-                depIcao:  d.origin.icao_code,
-                arrIcao:  d.destination.icao_code,
-                altnIcao: d.alternate ? d.alternate.icao_code : '----',
-                depTime:  d.times ? d.times.sched_out : '----',
-                arrTime:  d.times ? d.times.sched_in  : '----',
-                aircraft: d.aircraft ? d.aircraft.icaocode : '----',
-                route:    d.general ? d.general.route : '----',
-            };
-            atsuMsg = "OFP LOADED";
-            setStatus(`Uplinked: ${flight.fltNo}  ${flight.fromTo}`, '#00ff00');
-        } catch(e) {
-            atsuMsg = "UPLINK FAIL";
-        }
-        draw();
-    }
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════════════════════════
+const al=document.getElementById('alpha-btns');
+'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(x=>{
+  const b=document.createElement('button');b.className='btn btn-key';b.textContent=x;
+  b.onclick=()=>key(x);al.appendChild(b);
+});
+[['SP',' '],['CLR','']].forEach(([lbl])=>{
+  const b=document.createElement('button');b.className='btn btn-key';b.textContent=lbl;
+  b.onclick=()=>{if(lbl==='CLR')clr();else key(' ');};al.appendChild(b);
+});
 
-    async function atsuRequestWX() {
-        const dep = flight.atsu ? flight.atsu.depIcao : (flight.fromTo.split('/')[0] || '');
-        if (!dep || dep === '____') { atsuWxMsg = "NO DEP ARPT"; draw(); return; }
-        atsuWxMsg = "REQUESTING WX...";
-        draw();
-        try {
-            const url = `https://aviationweather.gov/api/data/metar?ids=${dep}&format=json`;
-            const r = await fetch(url);
-            const data = await r.json();
-            if (data && data.length > 0) {
-                atsuWxMsg = data[0].rawOb || "NO METAR";
-            } else {
-                atsuWxMsg = "NO WX DATA";
-            }
-        } catch(e) {
-            atsuWxMsg = "WX UNAVAIL";
-        }
-        draw();
-    }
+// Physical keyboard support
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.key==='Backspace'){clr();e.preventDefault();}
+  else if(e.key==='Enter'){ /* no-op */ }
+  else if(/^[a-zA-Z0-9\/\.\+\-]$/.test(e.key)) key(e.key.toUpperCase());
+});
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    function fmt(val, decimals = 0, suffix = '') {
-        if (val === null || val === undefined) return '---';
-        return Number(val).toFixed(decimals) + suffix;
-    }
-
-    function hdg(val) {
-        if (val === null || val === undefined) return '---';
-        return String(Math.round(val)).padStart(3, '0');
-    }
-
-    function nc(val, unit = '') {
-        // Returns value or NOT CONNECTED placeholder
-        if (!wsConnected) return '- - -';
-        if (live === null) return '- - -';
-        if (val === null || val === undefined) return '---';
-        return val + unit;
-    }
-
-    function draw() {
-        const titles = {
-            MENU:'MCDU MENU', FUEL:'FUEL PRED', PROG:'PROG', INIT:'INIT A',
-            ATSU:'ATSU', ATSU_AOC:'AOC MENU', ATSU_ATC:'ATC COMM',
-            AIDS:'AIDS', AIDS_ENG:'AIDS ENG', AIDS_APU:'AIDS APU',
-            CFDS:'CFDS', CFDS_LLR:'LAST LEG RPT', CFDS_PFR:'POST FLT RPT', CFDS_SYS:'SYS RPT/TEST',
-            SATCOM:'SATCOM'
-        };
-        document.getElementById('title-text').innerText = titles[page] || page;
-        // On AOC page, show WX in scratchpad if available
-        if (page === 'ATSU_AOC' && atsuWxMsg) {
-            document.getElementById('scratchpad').innerText = atsuWxMsg.slice(0, 28);
-        } else {
-            document.getElementById('scratchpad').innerText = pad;
-        }
-
-        if (page === "MENU") {
-            setRow(1, "", "", "&lt;FMGC", "REQ>", "G", "W");
-            setRow(2, "", "", "&lt;ATSU", "", "G", "");
-            setRow(3, "", "", "&lt;AIDS", "", "G", "");
-            setRow(4, "", "", "&lt;CFDS", "", "G", "");
-            setRow(5, "", "", "", "", "", "");
-            setRow(6, "", "", "&lt;SATCOM", "", "G", "");
-
-        } else if (page === "INIT") {
-            setRow(1, "CO RTE", "FROM/TO",   "NONE",       flight.fromTo, "W", "C");
-            setRow(2, "ALTN/CO RTE", "INIT", "NONE",       "REQUEST*",    "W", "A");
-            setRow(3, "FLT NBR", "",          flight.fltNo, "",            "C", "");
-            setRow(4, "COST INDEX", "",        flight.costIdx, "",          "C", "");
-            setRow(5, "CRZ FL/TEMP", "",       flight.crzAlt, "",           "C", "");
-            setRow(6, "TROPO", "",             "36090",      "",            "W", "");
-
-        } else if (page === "FUEL") {
-            const fu = flight.fuel;
-            const fob = (wsConnected && live) ? live.fuelTonnes : fu.block;
-            const fobColor = (wsConnected && live) ? "G" : "C";
-            setRow(1, "FOB" + (wsConnected ? " [LIVE]":""), "GW/CG",      fob,                        "---.-/--.-", fobColor, "G");
-            setRow(2, "DEST EFOB", "TIME",                                 fu.trip,                    "----",       "C", "G");
-            setRow(3, "ALTN EFOB", "TIME",                                 fu.altn,                    "----",       "C", "G");
-            setRow(4, "RTE RSV/%", "",                                     `${fu.rteRsv}/${fu.rsvPct}`, "",          "C", "");
-            setRow(5, "FINAL/TIME", "MIN DEST FOB",                        fu.final + "/0030",         "---.-",      "C", "A");
-            setRow(6, "EXTRA/TIME", "ZFW",                                 fu.extra + "/----",         fu.zfw,       "G", "C");
-
-        } else if (page === "PROG") {
-            if (!wsConnected || !live) {
-                setRow(1, "AIRSPEED", "ALTITUDE",  "NOT",   "CONNECTED", "A", "A");
-                setRow(2, "HDG", "V/S",            "NOT",   "CONNECTED", "A", "A");
-                setRow(3, "FOB", "",               "NOT CONNECTED", "",  "A", "");
-                setRow(4, "AP ALT", "AP HDG",      "NOT",   "CONNECTED", "A", "A");
-                setRow(5, "AP SPD", "AP",          "NOT",   "CONNECTED", "A", "A");
-                setRow(6, "ENG 1 N1", "ENG 2 N1", "NOT",   "CONNECTED", "A", "A");
-            } else {
-                const L = live;
-                const apOn = L.apMaster ? "AP ON" : "AP OFF";
-                const apColor = L.apMaster ? "G" : "A";
-                const vsStr = (L.vs >= 0 ? "+" : "") + Math.round(L.vs);
-                setRow(1, "AIRSPEED", "ALTITUDE",  fmt(L.ias,0,"KT"),       fmt(L.altitude,0,"FT"),  "G", "G");
-                setRow(2, "HDG", "V/S",            hdg(L.heading)+"°",      vsStr+"FPM",             "G", "G");
-                setRow(3, "FOB [LIVE]", "",         L.fuelTonnes+"T",        "",                      "G", "");
-                setRow(4, "AP ALT", "AP HDG",       fmt(L.apAltitude,0,"FT"),hdg(L.apHeading)+"°",   "C", "C");
-                setRow(5, "AP SPD", "",             fmt(L.apSpeed,0,"KT"),   apOn,                    "C", apColor);
-                setRow(6, "ENG 1 N1", "ENG 2 N1",  fmt(L.n1Eng1,1,"%"),     fmt(L.n1Eng2,1,"%"),     "G", "G");
-            }
-
-        // ── ATSU ──────────────────────────────────────────────────────────────
-        } else if (page === "ATSU") {
-            setRow(1, "", "",        "&lt;AOC MENU",  "",       "G", "");
-            setRow(2, "", "",        "&lt;ATC COMM",  "",       "G", "");
-            setRow(3, "", "",        "",               "",       "",  "");
-            setRow(4, "", "",        "",               "",       "",  "");
-            setRow(5, "", "",        "",               "",       "",  "");
-            setRow(6, "", "",        "",         "RETURN>",      "",  "W");
-
-        } else if (page === "ATSU_AOC") {
-            const loaded = flight.atsu ? "C" : "A";
-            const ofpLabel = flight.atsu ? `${flight.fromTo}` : "------/------";
-            setRow(1, "FLT NBR", "OFP",        "&lt;INIT DATA REQ*", flight.fltNo || "------", "A", loaded);
-            setRow(2, "WEATHER", "",            "&lt;WX REQUEST*",    "",                        "G", "");
-            setRow(3, "ROUTE", "",              flight.atsu ? flight.fromTo : "------/------", "", loaded, "");
-            setRow(4, "DEP TIME", "ARR TIME",
-                flight.atsu ? flight.atsu.depTime : "----",
-                flight.atsu ? flight.atsu.arrTime : "----",  "C", "C");
-            setRow(5, "ALTN", "",               flight.atsu ? flight.atsu.altnIcao : "----", "", "C", "");
-            setRow(6, atsuMsg || "", "",         "",               "RETURN>",                     "G", "W");
-
-        } else if (page === "ATSU_ATC") {
-            setRow(1, "ACTIVE ATC", "",         "--------",      "",           "A", "");
-            setRow(2, "ATC 1", "",              "--------",      "",           "C", "");
-            setRow(3, "ATC 2", "",              "--------",      "",           "C", "");
-            setRow(4, "", "",                   "",              "",           "",  "");
-            setRow(5, "", "DATALINK STATUS",    "",              "STBY",       "",  "A");
-            setRow(6, "", "",                   "",              "RETURN>",    "",  "W");
-
-        // ── AIDS ──────────────────────────────────────────────────────────────
-        } else if (page === "AIDS") {
-            setRow(1, "", "",   "&lt;ENGINE REPORT",  "",   "G", "");
-            setRow(2, "", "",   "&lt;APU REPORT",     "",   "G", "");
-            setRow(3, "", "",   "",                   "",   "",  "");
-            setRow(4, "", "",   "",                   "",   "",  "");
-            setRow(5, "", "",   "",                   "",   "",  "");
-            setRow(6, "", "",   "",             "RETURN>",  "",  "W");
-
-        } else if (page === "AIDS_ENG") {
-            // Use live N1 if available, else SimBrief TOW as proxy
-            const e1 = (wsConnected && live) ? fmt(live.n1Eng1,1,"%") : "---.-";
-            const e2 = (wsConnected && live) ? fmt(live.n1Eng2,1,"%") : "---.-";
-            const egt1 = (wsConnected && live) ? "---°C" : "---°C";
-            const src = (wsConnected && live) ? "G" : "A";
-            setRow(1, "ENG 1 N1",  "ENG 2 N1",    e1,              e2,              src, src);
-            setRow(2, "ENG 1 EGT", "ENG 2 EGT",   egt1,            egt1,            src, src);
-            setRow(3, "ENG 1 FF",  "ENG 2 FF",    "---KG/H",       "---KG/H",       src, src);
-            setRow(4, "TOW", "",                   flight.fuel.tow+"T", "",          "C", "");
-            setRow(5, "ZFW", "",                   flight.fuel.zfw+"T", "",          "C", "");
-            setRow(6, "", "",                      "",              "RETURN>",        "",  "W");
-
-        } else if (page === "AIDS_APU") {
-            setRow(1, "APU N1",    "",    "---.-",   "",   "A", "");
-            setRow(2, "APU EGT",   "",    "---°C",   "",   "A", "");
-            setRow(3, "APU FF",    "",    "---KG/H", "",   "A", "");
-            setRow(4, "APU HRS",   "",    "------",  "",   "C", "");
-            setRow(5, "", "",              "",        "",   "",  "");
-            setRow(6, "", "",              "",   "RETURN>",  "",  "W");
-
-        // ── CFDS ──────────────────────────────────────────────────────────────
-        } else if (page === "CFDS") {
-            setRow(1, "", "",   "&lt;LAST LEG RPT",   "",   "G", "");
-            setRow(2, "", "",   "&lt;POST FLT RPT",   "",   "G", "");
-            setRow(3, "", "",   "&lt;SYS RPT/TEST",   "",   "G", "");
-            setRow(4, "", "",   "",                   "",   "",  "");
-            setRow(5, "", "",   "",                   "",   "",  "");
-            setRow(6, "", "",   "",             "RETURN>",  "",  "W");
-
-        } else if (page === "CFDS_LLR") {
-            // Last leg report — shows flight number and basic status
-            const flt = flight.fltNo !== "______" ? flight.fltNo : "NO FLT NBR";
-            setRow(1, "FLT NBR", "DATE",     flt,         new Date().toISOString().slice(0,10), "W", "W");
-            setRow(2, "SYSTEMS", "",          "NO FAULTS", "",  "G", "");
-            setRow(3, "ECAM", "",             "NO WARNINGS","", "G", "");
-            setRow(4, "CLASS 1", "",          "NONE",      "",  "G", "");
-            setRow(5, "CLASS 2", "",          "NONE",      "",  "G", "");
-            setRow(6, "", "",                 "",    "RETURN>", "",  "W");
-
-        } else if (page === "CFDS_PFR") {
-            const flt = flight.fltNo !== "______" ? flight.fltNo : "NO FLT NBR";
-            const rte = flight.fromTo !== "____/____" ? flight.fromTo : "----/----";
-            setRow(1, "FLT NBR", "ROUTE",    flt,          rte,   "W", "W");
-            setRow(2, "BLOCK FUEL", "",       flight.fuel.block+"T", "", "C", "");
-            setRow(3, "TRIP FUEL",  "",       flight.fuel.trip+"T",  "", "C", "");
-            setRow(4, "ZFW", "TOW",           flight.fuel.zfw+"T", flight.fuel.tow+"T", "C", "C");
-            setRow(5, "STATUS", "",           "NO FAULTS",  "",    "G", "");
-            setRow(6, "", "",                 "",     "RETURN>",   "",  "W");
-
-        } else if (page === "CFDS_SYS") {
-            setRow(1, "", "FWC",    "",    "NORMAL",  "", "G");
-            setRow(2, "", "FADEC1", "",    "NORMAL",  "", "G");
-            setRow(3, "", "FADEC2", "",    "NORMAL",  "", "G");
-            setRow(4, "", "FMGC1",  "",    "NORMAL",  "", "G");
-            setRow(5, "", "FMGC2",  "",    "NORMAL",  "", "G");
-            setRow(6, "", "",       "",    "RETURN>",  "", "W");
-
-        // ── SATCOM ────────────────────────────────────────────────────────────
-        } else if (page === "SATCOM") {
-            setRow(1, "SATCOM STATUS", "",  "STBY",          "",   "A", "");
-            setRow(2, "CHANNEL", "",        "------",        "",   "C", "");
-            setRow(3, "GES ID", "",         "------",        "",   "C", "");
-            setRow(4, "SIGNAL", "",         "------",        "",   "C", "");
-            setRow(5, "DATALINK", "",       "NOT AVAIL",     "",   "A", "");
-            setRow(6, "", "",               "",        "RETURN>",  "",  "W");
-
-        } else {
-            for (let i = 1; i <= 6; i++) setRow(i, "", "", "", "", "", "");
-            setRow(3, "", "PAGE UNDER", "", "CONSTRUCTION", "", "A");
-        }
-    }
-
-    function setRow(num, l1, l2, v1, v2, c1, c2) {
-        document.getElementById('row' + num).innerHTML = `
-            <div class="label-row"><span>${l1}</span><span>${l2}</span></div>
-            <div class="val-row"><span class="${c1}">${v1}</span><span class="${c2}">${v2}</span></div>
-        `;
-    }
-
-    // ── Alpha keyboard ────────────────────────────────────────────────────────
-
-    const al = document.getElementById('alpha-btns');
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').forEach(x => {
-        let b = document.createElement('button'); b.className = "btn btn-key"; b.innerText = x;
-        b.onclick = () => key(x); al.appendChild(b);
-    });
-    [["SP"," "],["CLR",""]].forEach(([label]) => {
-        let b = document.createElement('button'); b.className = "btn btn-key"; b.innerText = label;
-        b.onclick = () => { if (label === 'CLR') { pad = ""; draw(); } else key(" "); };
-        al.appendChild(b);
-    });
-
-    draw();
+draw();
 </script>
 </body>
 </html>
