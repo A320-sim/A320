@@ -283,7 +283,16 @@
     // ── LSK handling ─────────────────────────────────────────────────────────
 
     function pressLSK(id) {
-        if (page === 'MENU' && id === 'L1') setPage('INIT');
+        // MENU navigation
+        if (page === 'MENU') {
+            if (id === 'L1') setPage('INIT');
+            if (id === 'L2') setPage('ATSU');
+            if (id === 'L3') setPage('AIDS');
+            if (id === 'L4') setPage('CFDS');
+            if (id === 'L6') setPage('SATCOM');
+        }
+
+        // INIT data entry
         if (page === 'INIT') {
             if (!pad || ["SUCCESS","NO FLIGHT","UPLINK ERR","UPLINKING"].includes(pad)) return;
             if (id === 'R1') flight.fromTo = pad;
@@ -291,6 +300,124 @@
             if (id === 'L4') flight.costIdx = pad;
             if (id === 'L5') flight.crzAlt  = pad;
             pad = "";
+        }
+
+        // ATSU — AOC subpage navigation
+        if (page === 'ATSU') {
+            if (id === 'L1') setPage('ATSU_AOC');
+            if (id === 'L2') setPage('ATSU_ATC');
+            if (id === 'R6') setPage('MENU');
+        }
+        if (page === 'ATSU_AOC') {
+            if (id === 'L1') atsuRequestOFP();
+            if (id === 'L2') atsuRequestWX();
+            if (id === 'R6') setPage('ATSU');
+        }
+        if (page === 'ATSU_ATC') {
+            if (id === 'R6') setPage('ATSU');
+        }
+
+        // AIDS subpages
+        if (page === 'AIDS') {
+            if (id === 'L1') setPage('AIDS_ENG');
+            if (id === 'L2') setPage('AIDS_APU');
+            if (id === 'R6') setPage('MENU');
+        }
+        if (page === 'AIDS_ENG' || page === 'AIDS_APU') {
+            if (id === 'R6') setPage('AIDS');
+        }
+
+        // CFDS subpages
+        if (page === 'CFDS') {
+            if (id === 'L1') setPage('CFDS_LLR');
+            if (id === 'L2') setPage('CFDS_PFR');
+            if (id === 'L3') setPage('CFDS_SYS');
+            if (id === 'R6') setPage('MENU');
+        }
+        if (page === 'CFDS_LLR' || page === 'CFDS_PFR' || page === 'CFDS_SYS') {
+            if (id === 'R6') setPage('CFDS');
+        }
+
+        // SATCOM
+        if (page === 'SATCOM') {
+            if (id === 'R6') setPage('MENU');
+        }
+
+        draw();
+    }
+
+    // ── ATSU actions ──────────────────────────────────────────────────────────
+
+    let atsuMsg = "";
+    let atsuWxMsg = "";
+
+    async function atsuRequestOFP() {
+        const raw = document.getElementById('sb-id-input').value.trim();
+        if (!raw) { atsuMsg = "NO PILOT ID"; draw(); return; }
+        atsuMsg = "REQUESTING...";
+        draw();
+        try {
+            const isNumeric = /^\d+$/.test(raw);
+            const param = isNumeric ? `userid=${raw}` : `username=${raw}`;
+            const url = `https://www.simbrief.com/api/xml.fetcher.php?${param}&json=1`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const d = await response.json();
+            if (d.fetch && d.fetch.status === 'Error') { atsuMsg = "NO OFP FOUND"; draw(); return; }
+            if (!d.origin || !d.destination) throw new Error('Bad data');
+            // Load into flight object (same as direct uplink)
+            flight.fromTo  = `${d.origin.icao_code}/${d.destination.icao_code}`.toUpperCase();
+            flight.fltNo   = `${d.general.icao_airline}${d.general.flight_number}`.toUpperCase();
+            flight.costIdx = d.general.costindex ?? d.general.cost_index ?? '---';
+            const fl = Math.round(parseInt(d.general.initial_altitude) / 100);
+            flight.crzAlt  = `FL${fl}/---°`;
+            const kg = (v) => v ? (parseInt(v) / 1000).toFixed(1) : '---.-';
+            const f = d.fuel || {};
+            flight.fuel.block  = kg(f.plan_ramp);
+            flight.fuel.trip   = kg(f.plan_trip);
+            flight.fuel.altn   = kg(f.plan_altn);
+            flight.fuel.rteRsv = kg(f.plan_contingency);
+            flight.fuel.rsvPct = f.cont_rule ? parseFloat(f.cont_rule).toFixed(1) : '5.0';
+            flight.fuel.final  = kg(f.plan_reserve);
+            flight.fuel.extra  = kg(f.plan_extra);
+            flight.fuel.taxi   = kg(f.plan_taxi);
+            flight.fuel.zfw    = kg(d.weights ? d.weights.est_zfw : null);
+            flight.fuel.tow    = kg(d.weights ? d.weights.est_tow : null);
+            flight.fuel.lw     = kg(d.weights ? d.weights.est_ldw : null);
+            // Store extra ATSU fields
+            flight.atsu = {
+                depIcao:  d.origin.icao_code,
+                arrIcao:  d.destination.icao_code,
+                altnIcao: d.alternate ? d.alternate.icao_code : '----',
+                depTime:  d.times ? d.times.sched_out : '----',
+                arrTime:  d.times ? d.times.sched_in  : '----',
+                aircraft: d.aircraft ? d.aircraft.icaocode : '----',
+                route:    d.general ? d.general.route : '----',
+            };
+            atsuMsg = "OFP LOADED";
+            setStatus(`Uplinked: ${flight.fltNo}  ${flight.fromTo}`, '#00ff00');
+        } catch(e) {
+            atsuMsg = "UPLINK FAIL";
+        }
+        draw();
+    }
+
+    async function atsuRequestWX() {
+        const dep = flight.atsu ? flight.atsu.depIcao : (flight.fromTo.split('/')[0] || '');
+        if (!dep || dep === '____') { atsuWxMsg = "NO DEP ARPT"; draw(); return; }
+        atsuWxMsg = "REQUESTING WX...";
+        draw();
+        try {
+            const url = `https://aviationweather.gov/api/data/metar?ids=${dep}&format=json`;
+            const r = await fetch(url);
+            const data = await r.json();
+            if (data && data.length > 0) {
+                atsuWxMsg = data[0].rawOb || "NO METAR";
+            } else {
+                atsuWxMsg = "NO WX DATA";
+            }
+        } catch(e) {
+            atsuWxMsg = "WX UNAVAIL";
         }
         draw();
     }
@@ -315,12 +442,21 @@
         return val + unit;
     }
 
-    // ── Draw ──────────────────────────────────────────────────────────────────
-
     function draw() {
-        const titles = { MENU:'MCDU MENU', FUEL:'FUEL PRED', PROG:'PROG', INIT:'INIT A' };
-        document.getElementById('title-text').innerText = titles[page] || page + ' A';
-        document.getElementById('scratchpad').innerText = pad;
+        const titles = {
+            MENU:'MCDU MENU', FUEL:'FUEL PRED', PROG:'PROG', INIT:'INIT A',
+            ATSU:'ATSU', ATSU_AOC:'AOC MENU', ATSU_ATC:'ATC COMM',
+            AIDS:'AIDS', AIDS_ENG:'AIDS ENG', AIDS_APU:'AIDS APU',
+            CFDS:'CFDS', CFDS_LLR:'LAST LEG RPT', CFDS_PFR:'POST FLT RPT', CFDS_SYS:'SYS RPT/TEST',
+            SATCOM:'SATCOM'
+        };
+        document.getElementById('title-text').innerText = titles[page] || page;
+        // On AOC page, show WX in scratchpad if available
+        if (page === 'ATSU_AOC' && atsuWxMsg) {
+            document.getElementById('scratchpad').innerText = atsuWxMsg.slice(0, 28);
+        } else {
+            document.getElementById('scratchpad').innerText = pad;
+        }
 
         if (page === "MENU") {
             setRow(1, "", "", "&lt;FMGC", "REQ>", "G", "W");
@@ -340,18 +476,16 @@
 
         } else if (page === "FUEL") {
             const fu = flight.fuel;
-            // If live connected, override FOB with real sim value
             const fob = (wsConnected && live) ? live.fuelTonnes : fu.block;
             const fobColor = (wsConnected && live) ? "G" : "C";
-            setRow(1, "FOB" + (wsConnected ? " [LIVE]":""), "GW/CG",      fob,                       "---.-/--.-", fobColor, "G");
-            setRow(2, "DEST EFOB", "TIME",                                 fu.trip,                   "----",       "C", "G");
-            setRow(3, "ALTN EFOB", "TIME",                                 fu.altn,                   "----",       "C", "G");
-            setRow(4, "RTE RSV/%", "",                                     `${fu.rteRsv}/${fu.rsvPct}`,"",          "C", "");
-            setRow(5, "FINAL/TIME", "MIN DEST FOB",                        fu.final + "/0030",        "---.-",      "C", "A");
-            setRow(6, "EXTRA/TIME", "ZFW",                                 fu.extra + "/----",        fu.zfw,       "G", "C");
+            setRow(1, "FOB" + (wsConnected ? " [LIVE]":""), "GW/CG",      fob,                        "---.-/--.-", fobColor, "G");
+            setRow(2, "DEST EFOB", "TIME",                                 fu.trip,                    "----",       "C", "G");
+            setRow(3, "ALTN EFOB", "TIME",                                 fu.altn,                    "----",       "C", "G");
+            setRow(4, "RTE RSV/%", "",                                     `${fu.rteRsv}/${fu.rsvPct}`, "",          "C", "");
+            setRow(5, "FINAL/TIME", "MIN DEST FOB",                        fu.final + "/0030",         "---.-",      "C", "A");
+            setRow(6, "EXTRA/TIME", "ZFW",                                 fu.extra + "/----",         fu.zfw,       "G", "C");
 
         } else if (page === "PROG") {
-            // PROG page — live sim data when connected, NOT CONNECTED otherwise
             if (!wsConnected || !live) {
                 setRow(1, "AIRSPEED", "ALTITUDE",  "NOT",   "CONNECTED", "A", "A");
                 setRow(2, "HDG", "V/S",            "NOT",   "CONNECTED", "A", "A");
@@ -364,24 +498,118 @@
                 const apOn = L.apMaster ? "AP ON" : "AP OFF";
                 const apColor = L.apMaster ? "G" : "A";
                 const vsStr = (L.vs >= 0 ? "+" : "") + Math.round(L.vs);
-                setRow(1, "AIRSPEED", "ALTITUDE",
-                    fmt(L.ias, 0, "KT"),
-                    fmt(L.altitude, 0, "FT"),    "G", "G");
-                setRow(2, "HDG", "V/S",
-                    hdg(L.heading) + "°",
-                    vsStr + "FPM",               "G", "G");
-                setRow(3, "FOB [LIVE]", "",
-                    L.fuelTonnes + "T",  "",     "G", "");
-                setRow(4, "AP ALT", "AP HDG",
-                    fmt(L.apAltitude, 0, "FT"),
-                    hdg(L.apHeading) + "°",      "C", "C");
-                setRow(5, "AP SPD", "",
-                    fmt(L.apSpeed, 0, "KT"),
-                    apOn,                        "C", apColor);
-                setRow(6, "ENG 1 N1", "ENG 2 N1",
-                    fmt(L.n1Eng1, 1, "%"),
-                    fmt(L.n1Eng2, 1, "%"),       "G", "G");
+                setRow(1, "AIRSPEED", "ALTITUDE",  fmt(L.ias,0,"KT"),       fmt(L.altitude,0,"FT"),  "G", "G");
+                setRow(2, "HDG", "V/S",            hdg(L.heading)+"°",      vsStr+"FPM",             "G", "G");
+                setRow(3, "FOB [LIVE]", "",         L.fuelTonnes+"T",        "",                      "G", "");
+                setRow(4, "AP ALT", "AP HDG",       fmt(L.apAltitude,0,"FT"),hdg(L.apHeading)+"°",   "C", "C");
+                setRow(5, "AP SPD", "",             fmt(L.apSpeed,0,"KT"),   apOn,                    "C", apColor);
+                setRow(6, "ENG 1 N1", "ENG 2 N1",  fmt(L.n1Eng1,1,"%"),     fmt(L.n1Eng2,1,"%"),     "G", "G");
             }
+
+        // ── ATSU ──────────────────────────────────────────────────────────────
+        } else if (page === "ATSU") {
+            setRow(1, "", "",        "&lt;AOC MENU",  "",       "G", "");
+            setRow(2, "", "",        "&lt;ATC COMM",  "",       "G", "");
+            setRow(3, "", "",        "",               "",       "",  "");
+            setRow(4, "", "",        "",               "",       "",  "");
+            setRow(5, "", "",        "",               "",       "",  "");
+            setRow(6, "", "",        "",         "RETURN>",      "",  "W");
+
+        } else if (page === "ATSU_AOC") {
+            const loaded = flight.atsu ? "C" : "A";
+            const ofpLabel = flight.atsu ? `${flight.fromTo}` : "------/------";
+            setRow(1, "FLT NBR", "OFP",        "&lt;INIT DATA REQ*", flight.fltNo || "------", "A", loaded);
+            setRow(2, "WEATHER", "",            "&lt;WX REQUEST*",    "",                        "G", "");
+            setRow(3, "ROUTE", "",              flight.atsu ? flight.fromTo : "------/------", "", loaded, "");
+            setRow(4, "DEP TIME", "ARR TIME",
+                flight.atsu ? flight.atsu.depTime : "----",
+                flight.atsu ? flight.atsu.arrTime : "----",  "C", "C");
+            setRow(5, "ALTN", "",               flight.atsu ? flight.atsu.altnIcao : "----", "", "C", "");
+            setRow(6, atsuMsg || "", "",         "",               "RETURN>",                     "G", "W");
+
+        } else if (page === "ATSU_ATC") {
+            setRow(1, "ACTIVE ATC", "",         "--------",      "",           "A", "");
+            setRow(2, "ATC 1", "",              "--------",      "",           "C", "");
+            setRow(3, "ATC 2", "",              "--------",      "",           "C", "");
+            setRow(4, "", "",                   "",              "",           "",  "");
+            setRow(5, "", "DATALINK STATUS",    "",              "STBY",       "",  "A");
+            setRow(6, "", "",                   "",              "RETURN>",    "",  "W");
+
+        // ── AIDS ──────────────────────────────────────────────────────────────
+        } else if (page === "AIDS") {
+            setRow(1, "", "",   "&lt;ENGINE REPORT",  "",   "G", "");
+            setRow(2, "", "",   "&lt;APU REPORT",     "",   "G", "");
+            setRow(3, "", "",   "",                   "",   "",  "");
+            setRow(4, "", "",   "",                   "",   "",  "");
+            setRow(5, "", "",   "",                   "",   "",  "");
+            setRow(6, "", "",   "",             "RETURN>",  "",  "W");
+
+        } else if (page === "AIDS_ENG") {
+            // Use live N1 if available, else SimBrief TOW as proxy
+            const e1 = (wsConnected && live) ? fmt(live.n1Eng1,1,"%") : "---.-";
+            const e2 = (wsConnected && live) ? fmt(live.n1Eng2,1,"%") : "---.-";
+            const egt1 = (wsConnected && live) ? "---°C" : "---°C";
+            const src = (wsConnected && live) ? "G" : "A";
+            setRow(1, "ENG 1 N1",  "ENG 2 N1",    e1,              e2,              src, src);
+            setRow(2, "ENG 1 EGT", "ENG 2 EGT",   egt1,            egt1,            src, src);
+            setRow(3, "ENG 1 FF",  "ENG 2 FF",    "---KG/H",       "---KG/H",       src, src);
+            setRow(4, "TOW", "",                   flight.fuel.tow+"T", "",          "C", "");
+            setRow(5, "ZFW", "",                   flight.fuel.zfw+"T", "",          "C", "");
+            setRow(6, "", "",                      "",              "RETURN>",        "",  "W");
+
+        } else if (page === "AIDS_APU") {
+            setRow(1, "APU N1",    "",    "---.-",   "",   "A", "");
+            setRow(2, "APU EGT",   "",    "---°C",   "",   "A", "");
+            setRow(3, "APU FF",    "",    "---KG/H", "",   "A", "");
+            setRow(4, "APU HRS",   "",    "------",  "",   "C", "");
+            setRow(5, "", "",              "",        "",   "",  "");
+            setRow(6, "", "",              "",   "RETURN>",  "",  "W");
+
+        // ── CFDS ──────────────────────────────────────────────────────────────
+        } else if (page === "CFDS") {
+            setRow(1, "", "",   "&lt;LAST LEG RPT",   "",   "G", "");
+            setRow(2, "", "",   "&lt;POST FLT RPT",   "",   "G", "");
+            setRow(3, "", "",   "&lt;SYS RPT/TEST",   "",   "G", "");
+            setRow(4, "", "",   "",                   "",   "",  "");
+            setRow(5, "", "",   "",                   "",   "",  "");
+            setRow(6, "", "",   "",             "RETURN>",  "",  "W");
+
+        } else if (page === "CFDS_LLR") {
+            // Last leg report — shows flight number and basic status
+            const flt = flight.fltNo !== "______" ? flight.fltNo : "NO FLT NBR";
+            setRow(1, "FLT NBR", "DATE",     flt,         new Date().toISOString().slice(0,10), "W", "W");
+            setRow(2, "SYSTEMS", "",          "NO FAULTS", "",  "G", "");
+            setRow(3, "ECAM", "",             "NO WARNINGS","", "G", "");
+            setRow(4, "CLASS 1", "",          "NONE",      "",  "G", "");
+            setRow(5, "CLASS 2", "",          "NONE",      "",  "G", "");
+            setRow(6, "", "",                 "",    "RETURN>", "",  "W");
+
+        } else if (page === "CFDS_PFR") {
+            const flt = flight.fltNo !== "______" ? flight.fltNo : "NO FLT NBR";
+            const rte = flight.fromTo !== "____/____" ? flight.fromTo : "----/----";
+            setRow(1, "FLT NBR", "ROUTE",    flt,          rte,   "W", "W");
+            setRow(2, "BLOCK FUEL", "",       flight.fuel.block+"T", "", "C", "");
+            setRow(3, "TRIP FUEL",  "",       flight.fuel.trip+"T",  "", "C", "");
+            setRow(4, "ZFW", "TOW",           flight.fuel.zfw+"T", flight.fuel.tow+"T", "C", "C");
+            setRow(5, "STATUS", "",           "NO FAULTS",  "",    "G", "");
+            setRow(6, "", "",                 "",     "RETURN>",   "",  "W");
+
+        } else if (page === "CFDS_SYS") {
+            setRow(1, "", "FWC",    "",    "NORMAL",  "", "G");
+            setRow(2, "", "FADEC1", "",    "NORMAL",  "", "G");
+            setRow(3, "", "FADEC2", "",    "NORMAL",  "", "G");
+            setRow(4, "", "FMGC1",  "",    "NORMAL",  "", "G");
+            setRow(5, "", "FMGC2",  "",    "NORMAL",  "", "G");
+            setRow(6, "", "",       "",    "RETURN>",  "", "W");
+
+        // ── SATCOM ────────────────────────────────────────────────────────────
+        } else if (page === "SATCOM") {
+            setRow(1, "SATCOM STATUS", "",  "STBY",          "",   "A", "");
+            setRow(2, "CHANNEL", "",        "------",        "",   "C", "");
+            setRow(3, "GES ID", "",         "------",        "",   "C", "");
+            setRow(4, "SIGNAL", "",         "------",        "",   "C", "");
+            setRow(5, "DATALINK", "",       "NOT AVAIL",     "",   "A", "");
+            setRow(6, "", "",               "",        "RETURN>",  "",  "W");
 
         } else {
             for (let i = 1; i <= 6; i++) setRow(i, "", "", "", "", "", "");
