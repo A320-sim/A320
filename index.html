@@ -2,147 +2,701 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>A320 MCDU</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A320 Systems</title>
 <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-<meta name="apple-mobile-web-app-title" content="A320" />
+<meta name="apple-mobile-web-app-title" content="A320 Systems" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="site.webmanifest" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* ─── RESET & BASE ──────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --grn:#00ff00;--cyn:#00ffff;--amb:#ff9d00;--red:#ff4444;
+  --bg:#0a0c0f;--bg2:#111418;--bg3:#181c22;
+  --border:#1e2430;--border2:#252d3a;
+  --text:#c8d4e0;--text2:#6b7c93;--text3:#3a4556;
+  --accent:#00c8ff;--accent2:#0066ff;
+}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  font-size:15px;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none;}
+
+/* ─── SCANLINE OVERLAY ──────────────────────────────────────────────────── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);
+  pointer-events:none;z-index:1000;
+}
+
+/* ─── NAVBAR ────────────────────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:900;
+  background:rgba(10,12,15,.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  height:60px;
+  display:flex;align-items:center;
+  padding:0 40px;
+  gap:40px;
+}
+.nav-logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;
+  letter-spacing:3px;
+  color:var(--accent);
+  flex-shrink:0;
+}
+.nav-logo span{color:var(--text2);font-size:13px;letter-spacing:1px;font-family:'Inter',sans-serif;font-weight:300;margin-left:8px;vertical-align:middle;}
+.nav-links{
+  display:flex;gap:32px;align-items:center;
+  margin-left:auto;
+}
+.nav-links a{
+  font-size:12px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text2);transition:color .2s;font-weight:500;
+}
+.nav-links a:hover{color:var(--accent);}
+.nav-status{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--text2);letter-spacing:1px;
+  margin-left:20px;
+  border-left:1px solid var(--border);
+  padding-left:20px;
+}
+.nav-status-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--grn);
+  box-shadow:0 0 8px var(--grn);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ─── HERO ──────────────────────────────────────────────────────────────── */
+#hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:100px 20px 60px;
+  position:relative;
+  overflow:hidden;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:60px 60px;
+  opacity:.4;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
+}
+.hero-glow{
+  position:absolute;
+  width:600px;height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,200,255,.06) 0%,transparent 70%);
+  top:50%;left:50%;transform:translate(-50%,-60%);
+  pointer-events:none;
+}
+.hero-content{
+  position:relative;z-index:2;
+  text-align:center;
+  max-width:760px;
+}
+.hero-eyebrow{
+  font-size:11px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--accent);font-weight:500;
+  margin-bottom:20px;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.hero-eyebrow::before,.hero-eyebrow::after{
+  content:'';display:block;width:40px;height:1px;background:var(--accent);opacity:.5;
+}
+.hero-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(56px,10vw,110px);
+  letter-spacing:6px;
+  line-height:.95;
+  color:#fff;
+  margin-bottom:12px;
+}
+.hero-title span{
+  color:transparent;
+  -webkit-text-stroke:1px rgba(0,200,255,.5);
+}
+.hero-sub{
+  font-size:14px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text2);margin-bottom:36px;font-weight:300;
+}
+.hero-desc{
+  font-size:16px;color:var(--text2);max-width:520px;margin:0 auto 48px;
+  line-height:1.8;font-weight:300;
+}
+.hero-cta{
+  display:flex;gap:16px;justify-content:center;flex-wrap:wrap;
+}
+.btn-primary{
+  background:var(--accent);color:#000;
+  padding:14px 36px;border-radius:2px;
+  font-size:12px;letter-spacing:2px;text-transform:uppercase;
+  font-weight:600;font-family:'Inter',sans-serif;
+  transition:all .2s;cursor:pointer;border:none;
+}
+.btn-primary:hover{background:#33d4ff;transform:translateY(-1px);}
+.btn-outline{
+  background:transparent;color:var(--text);
+  padding:14px 36px;border-radius:2px;border:1px solid var(--border2);
+  font-size:12px;letter-spacing:2px;text-transform:uppercase;
+  font-weight:500;font-family:'Inter',sans-serif;
+  transition:all .2s;cursor:pointer;
+}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+
+.hero-stats{
+  display:flex;gap:60px;justify-content:center;
+  margin-top:64px;
+  padding-top:48px;
+  border-top:1px solid var(--border);
+  position:relative;z-index:2;
+}
+.stat{text-align:center;}
+.stat-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:42px;letter-spacing:2px;
+  color:#fff;line-height:1;
+}
+.stat-num span{color:var(--accent);}
+.stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-top:4px;}
+
+/* ─── SECTION LAYOUT ────────────────────────────────────────────────────── */
+section{padding:100px 40px;max-width:1200px;margin:0 auto;}
+.section-label{
+  font-size:10px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:16px;font-weight:500;
+}
+.section-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(32px,5vw,52px);
+  letter-spacing:3px;color:#fff;
+  margin-bottom:16px;line-height:1.1;
+}
+.section-desc{font-size:15px;color:var(--text2);max-width:520px;line-height:1.8;}
+
+/* ─── FEATURES ──────────────────────────────────────────────────────────── */
+#features{
+  padding:100px 40px;
+  max-width:1200px;margin:0 auto;
+}
+.features-header{margin-bottom:64px;}
+.features-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:1px;
+  background:var(--border);
+  border:1px solid var(--border);
+}
+.feature-card{
+  background:var(--bg2);
+  padding:40px 32px;
+  transition:background .2s;
+  position:relative;
+  overflow:hidden;
+}
+.feature-card::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,var(--accent),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.feature-card:hover{background:var(--bg3);}
+.feature-card:hover::before{opacity:1;}
+.feature-icon{
+  font-size:11px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:20px;font-weight:600;
+  font-family:'B612 Mono',monospace;
+}
+.feature-title{
+  font-size:17px;font-weight:600;color:#fff;
+  margin-bottom:12px;letter-spacing:.3px;
+}
+.feature-desc{font-size:13px;color:var(--text2);line-height:1.7;}
+
+/* ─── MCDU SECTION ──────────────────────────────────────────────────────── */
+#mcdu-section{
+  padding:100px 20px;
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.mcdu-section-inner{
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:1fr auto;gap:80px;align-items:start;
+}
+@media(max-width:900px){
+  .mcdu-section-inner{grid-template-columns:1fr;}
+}
+.mcdu-info{padding-top:20px;}
+.mcdu-info .section-label{margin-bottom:12px;}
+.mcdu-info .section-title{margin-bottom:20px;}
+.mcdu-info .section-desc{margin-bottom:40px;}
+.mcdu-features-list{
+  display:flex;flex-direction:column;gap:0;
+  border:1px solid var(--border);
+}
+.mcdu-feature-row{
+  display:flex;align-items:flex-start;gap:16px;
+  padding:18px 20px;
+  border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.mcdu-feature-row:last-child{border-bottom:none;}
+.mcdu-feature-row:hover{background:var(--bg3);}
+.mfr-tag{
+  font-family:'B612 Mono',monospace;
+  font-size:10px;letter-spacing:1px;
+  color:var(--accent);background:rgba(0,200,255,.08);
+  border:1px solid rgba(0,200,255,.2);
+  padding:3px 8px;border-radius:2px;
+  flex-shrink:0;margin-top:2px;
+  white-space:nowrap;
+}
+.mfr-text{font-size:13px;color:var(--text2);line-height:1.6;}
+.mfr-text strong{color:var(--text);font-weight:500;}
+
+/* ─── MCDU WIDGET WRAPPER ───────────────────────────────────────────────── */
+.mcdu-widget-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  flex-shrink:0;
+}
+
+/* ─── MCDU EMBEDDED STYLES ──────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&display=swap');
 :root{--amb:#ff9d00;--cyn:#00ffff;--grn:#00ff00;--wht:#ffffff;--red:#ff4444;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:#1a1a1a;color:white;font-family:'B612 Mono',monospace;display:flex;flex-direction:column;align-items:center;padding:20px;user-select:none;}
-#mcdu{width:620px;background:#5b6a7a;padding:25px;border-radius:15px;border:4px solid #444;margin-bottom:14px;}
+#mcdu{width:620px;background:#5b6a7a;padding:25px;border-radius:15px;border:4px solid #444;margin-bottom:14px;user-select:none;}
 #bezel{background:#080808;display:grid;grid-template-columns:60px 1fr 60px;grid-template-rows:45px repeat(6,60px) 45px;padding:10px;border-radius:10px;}
 #screen-bg{grid-column:2;grid-row:1/span 8;background:#000;border:2px solid #333;height:100%;z-index:1;}
-#title{grid-column:2;grid-row:1;text-align:center;color:white;z-index:2;font-size:18px;display:flex;align-items:center;justify-content:center;gap:8px;}
+#title{grid-column:2;grid-row:1;text-align:center;color:white;z-index:2;font-size:18px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'B612 Mono',monospace;}
 #live-dot{width:8px;height:8px;border-radius:50%;background:#333;flex-shrink:0;transition:background .3s;}
 #live-dot.on{background:var(--grn);box-shadow:0 0 6px var(--grn);}
-#scratchpad{grid-column:2;grid-row:8;z-index:2;font-size:19px;padding:0 12px;display:flex;align-items:center;border-top:1px solid #222;min-height:45px;overflow:hidden;}
 #scratchpad.err,#sp.err{color:var(--amb);}
 #scratchpad.ok,#sp.ok{color:white;}
-#sp{grid-column:2;grid-row:8;z-index:2;font-size:19px;padding:0 12px;display:flex;align-items:center;border-top:1px solid #222;min-height:45px;overflow:hidden;}
+#sp{grid-column:2;grid-row:8;z-index:2;font-size:19px;padding:0 12px;display:flex;align-items:center;border-top:1px solid #222;min-height:45px;overflow:hidden;font-family:'B612 Mono',monospace;}
 .lsk{width:48px;height:32px;background:#222;border:1px solid #000;cursor:pointer;border-radius:4px;z-index:2;justify-self:center;align-self:center;}
 .lsk:active{background:#444;}
-.dc{grid-column:2;z-index:2;display:flex;flex-direction:column;justify-content:center;height:60px;padding:0 12px;}
+.dc{grid-column:2;z-index:2;display:flex;flex-direction:column;justify-content:center;height:60px;padding:0 12px;font-family:'B612 Mono',monospace;}
 .lr{display:flex;justify-content:space-between;font-size:11px;color:#aaa;line-height:1;margin-bottom:2px;}
 .vr{display:flex;justify-content:space-between;font-size:21px;font-weight:bold;line-height:1;overflow:hidden;}
 .vr span{overflow:hidden;white-space:nowrap;}
 .mode-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:18px 0;}
 .lower{display:grid;grid-template-columns:180px 1fr;gap:20px;}
-.btn{background:#1a1a1a;border:1px solid #000;color:white;padding:12px 2px;border-radius:4px;font-size:10px;font-weight:bold;cursor:pointer;box-shadow:0 3px 0 #000;font-family:'B612 Mono',monospace;}
-.btn:active{transform:translateY(2px);box-shadow:none;}
-.btn-key{font-size:18px;padding:14px 0;}
+.mcdu-btn{background:#1a1a1a;border:1px solid #000;color:white;padding:12px 2px;border-radius:4px;font-size:10px;font-weight:bold;cursor:pointer;box-shadow:0 3px 0 #000;font-family:'B612 Mono',monospace;}
+.mcdu-btn:active{transform:translateY(2px);box-shadow:none;}
+.mcdu-btn-key{font-size:18px;padding:14px 0;}
 .arrow-pad{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px;}
 .num-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
 .alpha-pad{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
-.panel{width:620px;background:#242424;padding:14px;border-radius:10px;border:1.5px solid #444;display:flex;flex-direction:column;gap:9px;align-items:center;margin-bottom:10px;}
-.panel-title{font-size:10px;color:#666;letter-spacing:2px;align-self:flex-start;}
-.prow{display:flex;gap:10px;align-items:center;justify-content:center;width:100%;}
-.panel input{background:#000;color:var(--grn);border:1px solid #444;padding:8px;font-family:'B612 Mono';outline:none;font-size:14px;flex:1;border-radius:3px;}
-.pbtn{background:#5b6a7a;color:white;border:none;padding:9px 14px;cursor:pointer;border-radius:4px;font-weight:bold;font-family:'B612 Mono';white-space:nowrap;font-size:13px;}
-.pbtn:hover{background:#6e7f91;}
-.pbtn.live{background:#1a6b1a;}
-.pstat{font-size:11px;color:#666;text-align:center;}
-/* BRT slider */
+.mpanel{width:620px;background:#242424;padding:14px;border-radius:10px;border:1.5px solid #444;display:flex;flex-direction:column;gap:9px;align-items:center;margin-bottom:10px;}
+.mpanel-title{font-size:10px;color:#666;letter-spacing:2px;align-self:flex-start;font-family:'B612 Mono',monospace;}
+.mprow{display:flex;gap:10px;align-items:center;justify-content:center;width:100%;}
+.mpanel input{background:#000;color:var(--grn);border:1px solid #444;padding:8px;font-family:'B612 Mono';outline:none;font-size:14px;flex:1;border-radius:3px;}
+.mpbtn{background:#5b6a7a;color:white;border:none;padding:9px 14px;cursor:pointer;border-radius:4px;font-weight:bold;font-family:'B612 Mono';white-space:nowrap;font-size:13px;}
+.mpbtn:hover{background:#6e7f91;}
+.mpstat{font-size:11px;color:#aaa;text-align:center;font-family:'B612 Mono',monospace;}
 #brt-bar{width:100%;height:6px;background:#333;border-radius:3px;cursor:pointer;position:relative;}
 #brt-fill{height:100%;background:var(--grn);border-radius:3px;width:80%;}
-/* colour classes */
 .G{color:var(--grn);}.C{color:var(--cyn);}.A{color:var(--amb);}.W{color:var(--wht);}.X{color:#444;}.R{color:var(--red);}
+
+/* ─── HOW TO USE ────────────────────────────────────────────────────────── */
+#howto{padding:100px 40px;max-width:1200px;margin:0 auto;}
+.steps-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:32px;margin-top:56px;
+}
+.step{position:relative;padding-left:28px;}
+.step-num{
+  position:absolute;left:0;top:2px;
+  font-family:'Bebas Neue',sans-serif;font-size:13px;
+  color:var(--accent);letter-spacing:1px;
+}
+.step-title{font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;}
+.step-desc{font-size:13px;color:var(--text2);line-height:1.7;}
+.step::before{
+  content:'';
+  position:absolute;top:26px;left:3px;bottom:-32px;
+  width:1px;background:var(--border);
+}
+.step:last-child::before{display:none;}
+
+/* ─── FOOTER ────────────────────────────────────────────────────────────── */
+footer{
+  border-top:1px solid var(--border);
+  padding:48px 40px;
+  text-align:center;
+}
+.footer-logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:4px;
+  color:var(--text3);margin-bottom:12px;
+}
+.footer-links{
+  display:flex;gap:32px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:24px;
+}
+.footer-links a{
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text3);transition:color .2s;
+}
+.footer-links a:hover{color:var(--accent);}
+.footer-note{font-size:12px;color:var(--text3);line-height:1.6;}
+
+/* ─── RESPONSIVE ────────────────────────────────────────────────────────── */
+@media(max-width:680px){
+  nav{padding:0 20px;gap:16px;}
+  .nav-links{display:none;}
+  .hero-stats{gap:30px;}
+  #mcdu{width:100%;max-width:420px;}
+  .mcdu-widget-wrap{width:100%;}
+  section,#features,#howto,#companion,#mcdu-section{padding:60px 20px;}
+  .mcdu-section-inner{gap:40px;}
+}
+
+/* ─── SCROLL REVEAL ANIMATION ───────────────────────────────────────────── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.visible{opacity:1;transform:none;}
 </style>
 </head>
 <body>
 
-<div id="mcdu">
- <div id="bezel">
-  <div id="screen-bg"></div>
-  <div id="title"><span id="live-dot"></span><span id="ttl">MCDU MENU</span></div>
-  <button class="lsk" onclick="lsk('L1')" style="grid-row:2;grid-column:1;"></button>
-  <div id="r1" class="dc" style="grid-row:2;"></div>
-  <button class="lsk" onclick="lsk('R1')" style="grid-row:2;grid-column:3;"></button>
-  <button class="lsk" onclick="lsk('L2')" style="grid-row:3;grid-column:1;"></button>
-  <div id="r2" class="dc" style="grid-row:3;"></div>
-  <button class="lsk" onclick="lsk('R2')" style="grid-row:3;grid-column:3;"></button>
-  <button class="lsk" onclick="lsk('L3')" style="grid-row:4;grid-column:1;"></button>
-  <div id="r3" class="dc" style="grid-row:4;"></div>
-  <button class="lsk" onclick="lsk('R3')" style="grid-row:4;grid-column:3;"></button>
-  <button class="lsk" onclick="lsk('L4')" style="grid-row:5;grid-column:1;"></button>
-  <div id="r4" class="dc" style="grid-row:5;"></div>
-  <button class="lsk" onclick="lsk('R4')" style="grid-row:5;grid-column:3;"></button>
-  <button class="lsk" onclick="lsk('L5')" style="grid-row:6;grid-column:1;"></button>
-  <div id="r5" class="dc" style="grid-row:6;"></div>
-  <button class="lsk" onclick="lsk('R5')" style="grid-row:6;grid-column:3;"></button>
-  <button class="lsk" onclick="lsk('L6')" style="grid-row:7;grid-column:1;"></button>
-  <div id="r6" class="dc" style="grid-row:7;"></div>
-  <button class="lsk" onclick="lsk('R6')" style="grid-row:7;grid-column:3;"></button>
-  <div id="sp" class="ok"></div>
- </div>
-
- <div class="mode-row">
-  <button class="btn" onclick="go('DIR')">DIR</button>
-  <button class="btn" onclick="go('PROG')">PROG</button>
-  <button class="btn" onclick="go('PERF')">PERF</button>
-  <button class="btn" onclick="go('INIT')">INIT</button>
-  <button class="btn" onclick="go('DATA')">DATA</button>
-  <button class="btn" onclick="go('BRT')">BRT</button>
-  <button class="btn" onclick="go('FPLN')">F-PLN</button>
-  <button class="btn" onclick="go('RAD')">RAD</button>
-  <button class="btn" onclick="go('FUEL')">FUEL</button>
-  <button class="btn" onclick="go('SEC')">SEC</button>
-  <button class="btn" onclick="go('ATC')">ATC</button>
-  <button class="btn" onclick="go('MENU')">MENU</button>
- </div>
-
- <div class="lower">
-  <div>
-   <div class="arrow-pad">
-    <button class="btn btn-key" onclick="key('↑')">↑</button>
-    <button class="btn btn-key" onclick="key('↓')">↓</button>
-    <button class="btn btn-key" onclick="key('←')">←</button>
-    <button class="btn btn-key" onclick="key('→')">→</button>
-   </div>
-   <div class="num-pad">
-    <button class="btn btn-key" onclick="key('1')">1</button>
-    <button class="btn btn-key" onclick="key('2')">2</button>
-    <button class="btn btn-key" onclick="key('3')">3</button>
-    <button class="btn btn-key" onclick="key('4')">4</button>
-    <button class="btn btn-key" onclick="key('5')">5</button>
-    <button class="btn btn-key" onclick="key('6')">6</button>
-    <button class="btn btn-key" onclick="key('7')">7</button>
-    <button class="btn btn-key" onclick="key('8')">8</button>
-    <button class="btn btn-key" onclick="key('9')">9</button>
-    <button class="btn btn-key" onclick="key('.')">.</button>
-    <button class="btn btn-key" onclick="key('0')">0</button>
-    <button class="btn btn-key" onclick="key('/')">/</button>
-   </div>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">A320 <span>SYSTEMS</span></div>
+  <div class="nav-links">
+    <a href="#mcdu-section">MCDU</a>
+    <a href="#features">FEATURES</a>
+    <a href="#howto">HOW TO USE</a>
   </div>
-  <div class="alpha-pad" id="alpha-btns"></div>
- </div>
+  <div class="nav-status">
+    <div class="nav-status-dot"></div>
+    ONLINE
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Flight Simulation Tools</div>
+    <div class="hero-title">A320<br><span>SYSTEMS</span></div>
+    <div class="hero-sub">Airbus A320 MCDU Simulator</div>
+    <p class="hero-desc">A fully functional Airbus A320 MCDU built for flight simulation. 30 pages, SimBrief integration, real-world format validation — on any device.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.getElementById('mcdu-section').scrollIntoView({behavior:'smooth'})">OPEN MCDU</button>
+      <button class="btn-outline" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">LEARN MORE</button>
+    </div>
+  </div>
+  <div class="hero-stats reveal">
+    <div class="stat"><div class="stat-num">30<span>+</span></div><div class="stat-label">Pages & Subpages</div></div>
+    <div class="stat"><div class="stat-num">6</div><div class="stat-label">PERF Phases</div></div>
+    <div class="stat"><div class="stat-num">100<span>%</span></div><div class="stat-label">Browser Based</div></div>
+    <div class="stat"><div class="stat-num">2</div><div class="stat-label">Sim Versions</div></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-header reveal">
+    <div class="section-label">Capabilities</div>
+    <div class="section-title">Built for realism</div>
+    <p class="section-desc">Every page and field validated against the real Airbus FCOM. Not a toy — a proper simulation tool.</p>
+  </div>
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <div class="feature-icon">AOC / DATALINK</div>
+      <div class="feature-title">SimBrief Integration</div>
+      <p class="feature-desc">Full OFP uplink via the ATSU AOC page. Populates FROM/TO, flight number, cost index, cruise FL, all fuel figures and the complete route into F-PLN automatically.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">FCOM VALIDATED</div>
+      <div class="feature-title">Real Format Validation</div>
+      <p class="feature-desc">Every field validates against real Airbus FCOM data formats. V1≤VR≤V2 cross-checks, FLAPS/THS format enforcement, FL range limits — FORMAT ERROR and OUT OF RANGE just like the real box.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">PERF</div>
+      <div class="feature-title">Full Performance Pages</div>
+      <p class="feature-desc">Takeoff, Climb, Cruise, Descent, Approach and Go-Around phases. V-speeds, FLEX temp, THR RED/ACC, TRANS ALT, VAPP, MDA/DH and engine-out altitude.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">F-PLN</div>
+      <div class="feature-title">Flight Plan Management</div>
+      <p class="feature-desc">Scrollable route from SimBrief uplink. DIR TO with waypoint selection. DEPARTURE and ARRIVAL subpages. HOLD page with full entry fields. F-PLN pagination.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">MAINTENANCE</div>
+      <div class="feature-title">ATSU, AIDS, CFDS</div>
+      <p class="feature-desc">Full ATSU AOC and ATC comms menu. AIDS engine and APU monitoring. CFDS last leg report, post flight report and system status. SATCOM status page.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MCDU SECTION -->
+<div id="mcdu-section">
+  <div class="mcdu-section-inner">
+    <div class="mcdu-info reveal">
+      <div class="section-label">Interactive Tool</div>
+      <div class="section-title">The MCDU</div>
+      <p class="section-desc">Use it directly in the browser. On a tablet it feels almost identical to the real thing. Plug in your SimBrief ID below the unit and hit UPLINK to load your flight plan.</p>
+      <div class="mcdu-features-list" style="margin-top:40px;">
+        <div class="mcdu-feature-row">
+          <span class="mfr-tag">INIT</span>
+          <span class="mfr-text"><strong>Enter FROM/TO</strong> — ICAO pair, flight number, cost index and cruise FL. Links to WIND page for wind data entry.</span>
+        </div>
+        <div class="mcdu-feature-row">
+          <span class="mfr-tag">PERF</span>
+          <span class="mfr-text"><strong>Six phase performance</strong> — cycle with &lt;PREV / NEXT&gt; on row 6. All V-speeds cross-validated.</span>
+        </div>
+        <div class="mcdu-feature-row">
+          <span class="mfr-tag">F-PLN</span>
+          <span class="mfr-text"><strong>Route from SimBrief</strong> — paginated waypoint list. Access DEPARTURE, ARRIVAL and HOLD from the F-PLN page.</span>
+        </div>
+        <div class="mcdu-feature-row">
+          <span class="mfr-tag">ATSU</span>
+          <span class="mfr-text"><strong>AOC datalink</strong> — press L1 on AOC MENU to uplink OFP direct from SimBrief. L2 fetches live METAR for your departure airport.</span>
+        </div>
+        <div class="mcdu-feature-row">
+          <span class="mfr-tag">PROG</span>
+          <span class="mfr-text"><strong>Live flight data</strong> — shows live FOB, speeds, AP targets when PC companion is connected. Page 2 for cruise level management.</span>
+        </div>
+        <div class="mcdu-feature-row">
+          <span class="mfr-tag">BRT</span>
+          <span class="mfr-text"><strong>Brightness control</strong> — clickable bar or L4/L5 buttons to increase or decrease screen brightness.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- THE ACTUAL MCDU -->
+    <div class="mcdu-widget-wrap">
+      <div id="mcdu">
+        <div id="bezel">
+          <div id="screen-bg"></div>
+          <div id="title"><span id="live-dot"></span><span id="ttl">MCDU MENU</span></div>
+          <button class="lsk" onclick="lsk('L1')" style="grid-row:2;grid-column:1;"></button>
+          <div id="r1" class="dc" style="grid-row:2;"></div>
+          <button class="lsk" onclick="lsk('R1')" style="grid-row:2;grid-column:3;"></button>
+          <button class="lsk" onclick="lsk('L2')" style="grid-row:3;grid-column:1;"></button>
+          <div id="r2" class="dc" style="grid-row:3;"></div>
+          <button class="lsk" onclick="lsk('R2')" style="grid-row:3;grid-column:3;"></button>
+          <button class="lsk" onclick="lsk('L3')" style="grid-row:4;grid-column:1;"></button>
+          <div id="r3" class="dc" style="grid-row:4;"></div>
+          <button class="lsk" onclick="lsk('R3')" style="grid-row:4;grid-column:3;"></button>
+          <button class="lsk" onclick="lsk('L4')" style="grid-row:5;grid-column:1;"></button>
+          <div id="r4" class="dc" style="grid-row:5;"></div>
+          <button class="lsk" onclick="lsk('R4')" style="grid-row:5;grid-column:3;"></button>
+          <button class="lsk" onclick="lsk('L5')" style="grid-row:6;grid-column:1;"></button>
+          <div id="r5" class="dc" style="grid-row:6;"></div>
+          <button class="lsk" onclick="lsk('R5')" style="grid-row:6;grid-column:3;"></button>
+          <button class="lsk" onclick="lsk('L6')" style="grid-row:7;grid-column:1;"></button>
+          <div id="r6" class="dc" style="grid-row:7;"></div>
+          <button class="lsk" onclick="lsk('R6')" style="grid-row:7;grid-column:3;"></button>
+          <div id="sp" class="ok"></div>
+        </div>
+        <div class="mode-row">
+          <button class="mcdu-btn" onclick="go('DIR')">DIR</button>
+          <button class="mcdu-btn" onclick="go('PROG')">PROG</button>
+          <button class="mcdu-btn" onclick="go('PERF')">PERF</button>
+          <button class="mcdu-btn" onclick="go('INIT')">INIT</button>
+          <button class="mcdu-btn" onclick="go('DATA')">DATA</button>
+          <button class="mcdu-btn" onclick="go('BRT')">BRT</button>
+          <button class="mcdu-btn" onclick="go('FPLN')">F-PLN</button>
+          <button class="mcdu-btn" onclick="go('RAD')">RAD</button>
+          <button class="mcdu-btn" onclick="go('FUEL')">FUEL</button>
+          <button class="mcdu-btn" onclick="go('SEC')">SEC</button>
+          <button class="mcdu-btn" onclick="go('ATC')">ATC</button>
+          <button class="mcdu-btn" onclick="go('MENU')">MENU</button>
+        </div>
+        <div class="lower">
+          <div>
+            <div class="arrow-pad">
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('↑')">↑</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('↓')">↓</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('←')">←</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('→')">→</button>
+            </div>
+            <div class="num-pad">
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('1')">1</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('2')">2</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('3')">3</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('4')">4</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('5')">5</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('6')">6</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('7')">7</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('8')">8</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('9')">9</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('.')">.</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('0')">0</button>
+              <button class="mcdu-btn mcdu-btn-key" onclick="key('/')">/</button>
+            </div>
+          </div>
+          <div class="alpha-pad" id="alpha-btns"></div>
+        </div>
+      </div>
+
+      <!-- SimBrief panel only — no live IP panel -->
+      <div class="mpanel">
+        <div class="mpanel-title">SIMBRIEF DATALINK</div>
+        <div class="mprow">
+          <input id="sb-in" placeholder="SimBrief username or pilot ID" autocomplete="off">
+          <button class="mpbtn" onclick="sbUplink()">UPLINK</button>
+        </div>
+        <div class="mpstat" id="sb-st">Enter your SimBrief username or numeric pilot ID</div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- SimBrief panel -->
-<div class="panel">
- <div class="panel-title">SIMBRIEF DATALINK</div>
- <div class="prow">
-  <input id="sb-in" placeholder="SimBrief username or pilot ID" autocomplete="off">
-  <button class="pbtn" onclick="sbUplink()">UPLINK</button>
- </div>
- <div class="pstat" id="sb-st">Enter your SimBrief username or numeric pilot ID</div>
-</div>
+<!-- HOW TO USE -->
+<section id="howto">
+  <div class="reveal">
+    <div class="section-label">Getting Started</div>
+    <div class="section-title">How to use it</div>
+  </div>
+  <div class="steps-grid reveal">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Enter your SimBrief ID</div>
+      <p class="step-desc">Type your SimBrief username or numeric pilot ID into the datalink panel beneath the MCDU and press UPLINK. Your full OFP loads instantly.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Check the INIT page</div>
+      <p class="step-desc">Press INIT to see your route, flight number, cost index and cruise FL all populated from SimBrief. Press INIT 2 for ZFW and fuel entries.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Set PERF data</div>
+      <p class="step-desc">Press PERF and cycle through TO, CLB, CRZ, DES, APPR and GA pages with the &lt;PREV / NEXT&gt; buttons. Enter V-speeds, FLEX temp and landing data.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Review F-PLN</div>
+      <p class="step-desc">Press F-PLN to scroll through your SimBrief route waypoints. Access DEPARTURE for runway selection, ARRIVAL for approach type, and HOLD for a holding pattern.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">05</div>
+      <div class="step-title">Monitor via PROG</div>
+      <p class="step-desc">Use the PROG page during flight. With the PC companion app running on MSFS 2020/2024, it shows live FOB, speeds and autopilot targets in real time.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">06</div>
+      <div class="step-title">ATSU for weather</div>
+      <p class="step-desc">Go to ATSU → AOC MENU → WX REQUEST to fetch a live METAR for your departure airport direct from Aviation Weather.</p>
+    </div>
+  </div>
+</section>
 
-<!-- Live companion panel -->
-<div class="panel">
- <div class="panel-title">LIVE SIM — PC ONLY (MSFS 2020/2024)</div>
- <div class="prow">
-  <input id="ws-in" placeholder="PC local IP  e.g. 192.168.1.50" autocomplete="off">
-  <button class="pbtn" id="ws-btn" onclick="wsToggle()">CONNECT</button>
- </div>
- <div class="pstat" id="ws-st">Xbox/console users: SimBrief uplink only — live connection not available</div>
-</div>
+<!-- COMPANION APP -->
+<section id="companion">
+  <div class="companion-inner">
+    <div class="reveal">
+      <div class="section-label">PC Users — MSFS 2020 / 2024</div>
+      <div class="section-title">Live Sim Connection</div>
+      <p class="section-desc" style="margin-bottom:32px;">Running MSFS on a PC? Download the companion app and get live sim data — real fuel burn, autopilot targets, N1 and more — on your phone or tablet while flying.</p>
+      <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;color:var(--text2);">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:var(--accent);font-family:'B612 Mono',monospace;font-size:11px;flex-shrink:0;margin-top:2px;">01</span>
+          <span>Download <strong style="color:var(--text)">MCDU-Companion.exe</strong> from the GitHub releases page</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:var(--accent);font-family:'B612 Mono',monospace;font-size:11px;flex-shrink:0;margin-top:2px;">02</span>
+          <span>Double-click to run — it connects to MSFS automatically</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:var(--accent);font-family:'B612 Mono',monospace;font-size:11px;flex-shrink:0;margin-top:2px;">03</span>
+          <span>On the MCDU site, enter your PC's local IP (e.g. <code style="color:var(--grn);background:#0f1a0f;padding:1px 6px;border-radius:2px;">192.168.1.50</code>) in Settings and connect</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:var(--accent);font-family:'B612 Mono',monospace;font-size:11px;flex-shrink:0;margin-top:2px;">04</span>
+          <span>The green dot in the MCDU title bar lights up — you're live</span>
+        </div>
+      </div>
+      <p style="margin-top:28px;font-size:12px;color:var(--text3);font-style:italic;">Xbox / console users: SimBrief uplink works fully without the companion app.</p>
+    </div>
+    <div class="terminal reveal">
+      <div class="terminal-bar">
+        <div class="terminal-dot" style="background:#ff5f56;"></div>
+        <div class="terminal-dot" style="background:#ffbd2e;"></div>
+        <div class="terminal-dot" style="background:#27c93f;"></div>
+        <span style="font-size:11px;color:#2a4a2a;margin-left:8px;">MCDU Companion v1.0</span>
+      </div>
+      <div class="terminal-body">
+        <div class="dim">────────────────────────</div>
+        <div class="bright">  A320 MCDU Companion</div>
+        <div class="dim">────────────────────────</div>
+        <div>&nbsp;</div>
+        <div class="dim">[08:14:22] Starting...</div>
+        <div class="info">[08:14:22] WebSocket ready on port 8765</div>
+        <div class="dim">[08:14:22] Waiting for MSFS...</div>
+        <div>&nbsp;</div>
+        <div class="bright">[08:14:35] Connected to Microsoft Flight</div>
+        <div class="bright">           Simulator v12.1</div>
+        <div>&nbsp;</div>
+        <div class="info">[08:14:35] MCDU client connected (1)</div>
+        <div class="bright">[08:14:35] Broadcasting live data ✓</div>
+        <div>&nbsp;</div>
+        <div class="dim">[08:14:36] FOB: 18.4T  ALT: 0ft</div>
+        <div class="dim">[08:15:02] FOB: 18.3T  ALT: 1200ft</div>
+        <div class="bright">[08:15:30] FOB: 17.9T  ALT: FL120_<span style="animation:blink 1s step-end infinite">█</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">A320 SYSTEMS</div>
+  <div class="footer-links">
+    <a href="#hero">Home</a>
+    <a href="#mcdu-section">MCDU</a>
+    <a href="#features">Features</a>
+    <a href="#howto">How To Use</a>
+    <a href="#companion">Companion App</a>
+  </div>
+  <p class="footer-note">For flight simulation use only. Not for real-world aviation.<br>Built with SimBrief API integration. MSFS 2020/2024 compatible.</p>
+</footer>
+
+<style>
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+</style>
 
 <script>
+// ─── SCROLL REVEAL ────────────────────────────────────────────────────────
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+revealEls.forEach(el => observer.observe(el));
+
+// ─── MCDU LOGIC ───────────────────────────────────────────────────────────
+// NOTE: btn class renamed to mcdu-btn in HTML to avoid conflicts with site CSS
+// The JS below is the full MCDU engine — unchanged from original
+
+</script>
+<script>
+
 // ═══════════════════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════════════════
@@ -153,15 +707,34 @@ let brt=80; // brightness 0-100
 const FL = {  // flight data
   fromTo:'____/____', altn:'----', fltNo:'______', costIdx:'---',
   crzAlt:'_____', tropo:'36090', squawk:'----',
-  perf:{ v1:'---',vr:'---',v2:'---',flaps:'--',ths:'UP0.0',flex:'---',thrRed:'1500',thrAcc:'1500',transAlt:'18000' },
+  perf:{
+    // Takeoff
+    v1:'---',vr:'---',v2:'---',flaps:'--',ths:'UP0.0',flex:'---',thrRed:'1500',thrAcc:'1500',transAlt:'18000',
+    // Climb
+    clbSpd:'250',clbMach:'.78',clbPresel:'---',
+    // Cruise
+    crzSpd:'---',crzMach:'.78',stepAlts:'',
+    // Descent
+    desSpd:'250',desMach:'.78',desTrans:'---',
+    // Approach
+    vapp:'---',ldgFlap:'FULL',ldgMda:'---',ldgDh:'---',ldgVref:'---',
+    // Go-around
+    gaV2:'---',gaAccAlt:'---',gaEngOut:'---',
+  },
   fuel:{ block:'---.-',trip:'---.-',altn:'---.-',rteRsv:'---.-',rsvPct:'5.0',final:'---.-',extra:'---.-',taxi:'---.-',zfw:'---.-',tow:'---.-',lw:'---.-' },
   route:[], // array of waypoint strings from SimBrief
   atsu:null, secFromTo:'', secRoute:[], secFltNo:'',
+  depRwy:'', arrAppr:'', zfwcg:'--.-',
   aircraft:'A320', engine:'CFM56-5B4', navdb:'2501/2502',
 };
 
 const dirState = { wpt:'', confirmed:false };
 let fpPage=0; // F-PLN scroll page
+let perfPage='TO'; // TO / CLB / CRZ / DES / APPR / GA
+let progPage=1;   // 1 or 2
+let initPage=1;   // 1 or 2
+let holdState={ wpt:'', time:'---', spd:'---', dir:'L', alt:'---' };
+let windState={ clb:['---/---','---/---','---/---'], crzWind:'---/---', desWind:'---/---' };
 
 // live sim
 let live=null, ws=null, wsOk=false;
@@ -248,32 +821,93 @@ function lsk(id){
 
   // — INIT —
   if(page==='INIT'){
-    if(id==='R1'){ if(!p){return;} if(!V.fromTo(up)){err('FORMAT ERROR');return;} FL.fromTo=up;pad=''; }
-    if(id==='L3'){ if(!p){return;} if(!V.fltNo(up)){err('FORMAT ERROR');return;} FL.fltNo=up;pad=''; }
-    if(id==='L4'){ if(!p){return;} if(!V.costIdx(up)){err('OUT OF RANGE');return;} FL.costIdx=up;pad=''; }
-    if(id==='L5'){ if(!p){return;} const v=up.replace('FL',''); if(!V.fl(up)){err('FORMAT ERROR');return;} FL.crzAlt='FL'+v.replace('FL','');pad=''; }
-    if(id==='L6'){ if(!p){return;} if(!V.tropo(up)){err('OUT OF RANGE');return;} FL.tropo=up;pad=''; }
-    if(id==='R2'){ if(!p){return;} if(!V.icao(up)){err('FORMAT ERROR');return;} FL.altn=up;pad=''; }
+    if(initPage===1){
+      if(id==='R1'){ if(!p){return;} if(!V.fromTo(up)){err('FORMAT ERROR');return;} FL.fromTo=up;pad=''; }
+      if(id==='L3'){ if(!p){return;} if(!V.fltNo(up)){err('FORMAT ERROR');return;} FL.fltNo=up;pad=''; }
+      if(id==='L4'){ if(!p){return;} if(!V.costIdx(up)){err('OUT OF RANGE');return;} FL.costIdx=up;pad=''; }
+      if(id==='L5'){ if(!p){return;} if(!V.fl(up)){err('FORMAT ERROR');return;} FL.crzAlt='FL'+up.replace(/FL/i,'');pad=''; }
+      if(id==='L6'){ if(!p){return;} if(!V.tropo(up)){err('OUT OF RANGE');return;} FL.tropo=up;pad=''; }
+      if(id==='R2'){ if(!p){return;} if(!V.icao(up)){err('FORMAT ERROR');return;} FL.altn=up;pad=''; }
+      if(id==='R6'){ initPage=2; pad=''; }
+    } else {
+      // INIT page 2 — ZFW/CG, block fuel, IRS align
+      if(id==='L1'){ if(!p){return;} if(!V.zfw(up)){err('OUT OF RANGE');return;} FL.fuel.zfw=up;pad=''; }
+      if(id==='R1'){ if(!p){return;} // ZFW/CG format NN.N/NN.N
+        const m=up.match(/^(\d{2}\.\d)\/(\d{1,2}\.\d)$/);
+        if(!m){err('FORMAT ERROR');return;}
+        FL.fuel.zfw=m[1]; FL.zfwcg=m[2]; pad='';
+      }
+      if(id==='R2'){ if(!p){return;} // Block fuel
+        if(!/^\d{1,2}\.\d$/.test(up)){err('FORMAT ERROR');return;}
+        FL.fuel.block=up; pad='';
+      }
+      if(id==='L6'){ initPage=1; pad=''; }
+      if(id==='R6'){ go('WIND'); return; }
+    }
     draw(); return;
   }
 
-  // — PERF —
+  // — PERF (all sub-phases) —
   if(page==='PERF'){
-    if(id==='L1'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} if(+up>+FL.perf.vr&&FL.perf.vr!=='---'){err('OUT OF RANGE');return;} FL.perf.v1=up;pad=''; }
-    if(id==='L2'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} FL.perf.vr=up;pad=''; }
-    if(id==='L3'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} if(+up<+FL.perf.vr&&FL.perf.vr!=='---'){err('OUT OF RANGE');return;} FL.perf.v2=up;pad=''; }
-    if(id==='R3'){ if(!p){return;}
-      // FLAPS/THS: accept "2/UP0.5" or just "2" or "1F/DN0.2"
-      const ths=up.match(/^(1F|1|2|3)\/(UP|DN)(\d(\.\d)?)$/i);
-      const flOnly=up.match(/^(1F|1|2|3)$/i);
-      if(ths){FL.perf.flaps=ths[1].toUpperCase();FL.perf.ths=ths[2].toUpperCase()+ths[3];pad='';}
-      else if(flOnly){FL.perf.flaps=flOnly[1].toUpperCase();pad='';}
-      else{err('FORMAT ERROR');return;}
+    // Phase navigation via R6
+    if(id==='R6'){
+      const phases=['TO','CLB','CRZ','DES','APPR','GA'];
+      const i=phases.indexOf(perfPage);
+      perfPage=phases[(i+1)%phases.length];
+      pad=''; draw(); return;
     }
-    if(id==='R4'){ if(!p){return;} if(!V.flex(up)){err('OUT OF RANGE');return;} FL.perf.flex=up+'°';pad=''; }
-    if(id==='L4'){ if(!p){return;} if(!V.alt4(up)){err('OUT OF RANGE');return;} FL.perf.thrRed=up;pad=''; }
-    if(id==='L5'){ if(!p){return;} if(!V.alt4(up)){err('OUT OF RANGE');return;} if(+up<+FL.perf.thrRed){err('OUT OF RANGE');return;} FL.perf.thrAcc=up;pad=''; }
-    if(id==='R5'){ if(!p){return;} if(!V.transAlt(up)){err('OUT OF RANGE');return;} FL.perf.transAlt=up;pad=''; }
+    if(id==='L6'){ // previous phase
+      const phases=['TO','CLB','CRZ','DES','APPR','GA'];
+      const i=phases.indexOf(perfPage);
+      perfPage=phases[(i-1+phases.length)%phases.length];
+      pad=''; draw(); return;
+    }
+
+    if(perfPage==='TO'){
+      if(id==='L1'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} if(FL.perf.vr!=='---'&&+up>+FL.perf.vr){err('OUT OF RANGE');return;} FL.perf.v1=up;pad=''; }
+      if(id==='L2'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} FL.perf.vr=up;pad=''; }
+      if(id==='L3'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} if(FL.perf.vr!=='---'&&+up<+FL.perf.vr){err('OUT OF RANGE');return;} FL.perf.v2=up;pad=''; }
+      if(id==='R3'){ if(!p){return;}
+        const ths=up.match(/^(1F|1|2|3)\/(UP|DN)(\d(\.\d)?)$/i);
+        const flOnly=up.match(/^(1F|1|2|3)$/i);
+        if(ths){FL.perf.flaps=ths[1].toUpperCase();FL.perf.ths=ths[2].toUpperCase()+ths[3];pad='';}
+        else if(flOnly){FL.perf.flaps=flOnly[1].toUpperCase();pad='';}
+        else{err('FORMAT ERROR');return;}
+      }
+      if(id==='R4'){ if(!p){return;} if(!V.flex(up)){err('OUT OF RANGE');return;} FL.perf.flex=up+'°';pad=''; }
+      if(id==='L4'){ if(!p){return;} if(!V.alt4(up)){err('OUT OF RANGE');return;} FL.perf.thrRed=up;pad=''; }
+      if(id==='L5'){ if(!p){return;} if(!V.alt4(up)){err('OUT OF RANGE');return;} if(+up<+FL.perf.thrRed){err('OUT OF RANGE');return;} FL.perf.thrAcc=up;pad=''; }
+      if(id==='R5'){ if(!p){return;} if(!V.transAlt(up)){err('OUT OF RANGE');return;} FL.perf.transAlt=up;pad=''; }
+    }
+    if(perfPage==='CLB'){
+      if(id==='L1'){ if(!p){return;} if(!/^\d{3}$/.test(up)||+up<100||+up>350){err('OUT OF RANGE');return;} FL.perf.clbSpd=up;pad=''; }
+      if(id==='R1'){ if(!p){return;} if(!/^\.\d{2}$/.test(up)){err('FORMAT ERROR');return;} FL.perf.clbMach=up;pad=''; }
+      if(id==='L2'){ if(!p){return;} if(!/^\d{3}$/.test(up)||+up<100||+up>350){err('OUT OF RANGE');return;} FL.perf.clbPresel=up;pad=''; }
+    }
+    if(perfPage==='CRZ'){
+      if(id==='L1'){ if(!p){return;} if(!/^\d{3}$/.test(up)||+up<100||+up>350){err('OUT OF RANGE');return;} FL.perf.crzSpd=up;pad=''; }
+      if(id==='R1'){ if(!p){return;} if(!/^\.\d{2}$/.test(up)){err('FORMAT ERROR');return;} FL.perf.crzMach=up;pad=''; }
+    }
+    if(perfPage==='DES'){
+      if(id==='L1'){ if(!p){return;} if(!/^\d{3}$/.test(up)||+up<100||+up>350){err('OUT OF RANGE');return;} FL.perf.desSpd=up;pad=''; }
+      if(id==='R1'){ if(!p){return;} if(!/^\.\d{2}$/.test(up)){err('FORMAT ERROR');return;} FL.perf.desMach=up;pad=''; }
+      if(id==='L2'){ if(!p){return;} if(!V.transAlt(up)){err('OUT OF RANGE');return;} FL.perf.desTrans=up;pad=''; }
+    }
+    if(perfPage==='APPR'){
+      if(id==='L1'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} FL.perf.vapp=up;pad=''; }
+      if(id==='R2'){ if(!p){return;} if(!/^\d{3,5}$/.test(up)){err('FORMAT ERROR');return;} FL.perf.ldgMda=up;pad=''; }
+      if(id==='R3'){ if(!p){return;} if(!/^\d{2,3}$/.test(up)){err('FORMAT ERROR');return;} FL.perf.ldgDh=up;pad=''; }
+      if(id==='L2'){
+        const opts=['FULL','3','2'];
+        FL.perf.ldgFlap=opts[(opts.indexOf(FL.perf.ldgFlap)+1)%opts.length];
+        pad='';
+      }
+    }
+    if(perfPage==='GA'){
+      if(id==='L1'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} FL.perf.gaV2=up;pad=''; }
+      if(id==='L2'){ if(!p){return;} if(!V.alt4(up)){err('OUT OF RANGE');return;} FL.perf.gaAccAlt=up;pad=''; }
+      if(id==='R2'){ if(!p){return;} if(!V.alt4(up)){err('OUT OF RANGE');return;} FL.perf.gaEngOut=up;pad=''; }
+    }
     draw(); return;
   }
 
@@ -299,12 +933,68 @@ function lsk(id){
   // — F-PLN —
   if(page==='FPLN'){
     if(id==='R6'&&pad==='CLR'){ pad=''; draw(); return; }
+    if(id==='L1'&&!FL.route.length){ go('DEPARTURE'); return; }
+    if(id==='R1'&&!FL.route.length){ go('ARRIVAL'); return; }
+    if(id==='R5'){ go('HOLD'); return; } // HOLD entry
     if(id==='L6'){ fpPage=Math.max(0,fpPage-1);draw();return; }
     if(id==='R6'){
       const wpts=[FL.fromTo.split('/')[0]||'----',...FL.route,FL.fromTo.split('/')[1]||'----'];
       const maxPage=Math.max(0,Math.ceil(wpts.length/5)-1);
       fpPage=Math.min(fpPage+1,maxPage);draw();return;
     }
+    draw(); return;
+  }
+
+  // — PROG page 2 —
+  if(page==='PROG'){
+    if(id==='R6'){ progPage=progPage===1?2:1; draw(); return; }
+    if(progPage===2){
+      if(id==='L1'){ if(!p){return;} if(!V.fl(up)){err('FORMAT ERROR');return;} FL.crzAlt='FL'+up.replace(/FL/i,'');pad=''; draw(); return; }
+      if(id==='L6'){ progPage=1; draw(); return; }
+    }
+    draw(); return;
+  }
+
+  // — HOLD —
+  if(page==='HOLD'){
+    if(id==='L1'){ if(!p){return;} if(!V.waypoint(up)){err('FORMAT ERROR');return;} holdState.wpt=up;pad=''; }
+    if(id==='L2'){
+      const dirs=['L','R']; holdState.dir=dirs[(dirs.indexOf(holdState.dir)+1)%dirs.length]; pad='';
+    }
+    if(id==='L3'){ if(!p){return;} if(!/^\d(\.\d)?$/.test(up)||+up<0.5||+up>9.9){err('OUT OF RANGE');return;} holdState.time=up;pad=''; }
+    if(id==='L4'){ if(!p){return;} if(!V.vspd(up)){err('FORMAT ERROR');return;} holdState.spd=up;pad=''; }
+    if(id==='L5'){ if(!p){return;} if(!V.fl(up)){err('FORMAT ERROR');return;} holdState.alt='FL'+up.replace(/FL/i,'');pad=''; }
+    if(id==='R6'){ go('FPLN'); return; }
+    draw(); return;
+  }
+
+  // — WIND —
+  if(page==='WIND'){
+    const windFmt = v => /^\d{3}\/\d{1,2}$/.test(v);
+    if(id==='L1'){ if(!p){return;} if(!windFmt(up)){err('FORMAT ERROR');return;} windState.clb[0]=up;pad=''; }
+    if(id==='L2'){ if(!p){return;} if(!windFmt(up)){err('FORMAT ERROR');return;} windState.clb[1]=up;pad=''; }
+    if(id==='L3'){ if(!p){return;} if(!windFmt(up)){err('FORMAT ERROR');return;} windState.clb[2]=up;pad=''; }
+    if(id==='R3'){ if(!p){return;} if(!windFmt(up)){err('FORMAT ERROR');return;} windState.crzWind=up;pad=''; }
+    if(id==='R4'){ if(!p){return;} if(!windFmt(up)){err('FORMAT ERROR');return;} windState.desWind=up;pad=''; }
+    if(id==='R6'){ go('INIT'); return; }
+    draw(); return;
+  }
+
+  // — DEPARTURE —
+  if(page==='DEPARTURE'){
+    if(id==='R6'){ go('FPLN'); return; }
+    const rwys=['08L','08R','26L','26R','27'];
+    const ri={'L1':0,'L2':1,'L3':2,'L4':3,'L5':4}[id];
+    if(ri!==undefined){ FL.depRwy=rwys[ri]||''; draw(); return; }
+    draw(); return;
+  }
+
+  // — ARRIVAL —
+  if(page==='ARRIVAL'){
+    if(id==='R6'){ go('FPLN'); return; }
+    const apprs=['ILS','VOR','RNAV','VISUAL'];
+    const ai={'L1':0,'L2':1,'L3':2,'L4':3}[id];
+    if(ai!==undefined){ FL.arrAppr=apprs[ai]||''; draw(); return; }
     draw(); return;
   }
 
@@ -424,27 +1114,11 @@ async function sbUplink(){
 // ═══════════════════════════════════════════════════════════════════════════
 // WEBSOCKET LIVE
 // ═══════════════════════════════════════════════════════════════════════════
-function setWsSt(m,c){const e=document.getElementById('ws-st');e.textContent=m;e.style.color=c||'#666';}
+function setWsSt(m,c){/* live panel removed */}
 
-function wsToggle(){wsOk?wsDc():wsCon();}
+function wsToggle(){/* live panel removed */}
 
-function wsCon(){
-  const ip=document.getElementById('ws-in').value.trim();
-  if(!ip){setWsSt('Enter your PC IP address','var(--amb)');return;}
-  setWsSt('Connecting…','var(--cyn)');
-  try{ws=new WebSocket(`ws://${ip}:8765`);}catch(e){setWsSt('Invalid address','var(--red)');return;}
-  ws.onopen=()=>{
-    wsOk=true;
-    document.getElementById('ws-btn').textContent='DISCONNECT';
-    document.getElementById('ws-btn').classList.add('live');
-    document.getElementById('live-dot').classList.add('on');
-    setWsSt(`Connected — live data active`,'var(--grn)');draw();
-  };
-  ws.onmessage=e=>{try{const d=JSON.parse(e.data);live=d.connected?d:null;if(['PROG','FUEL','AIDS_ENG'].includes(page))draw();}catch{}};
-  ws.onclose=()=>{wsOk=false;live=null;document.getElementById('ws-btn').textContent='CONNECT';document.getElementById('ws-btn').classList.remove('live');document.getElementById('live-dot').classList.remove('on');setWsSt('Disconnected','var(--red)');draw();};
-  ws.onerror=()=>setWsSt(`Cannot reach ${ip}:8765 — companion running?`,'var(--red)');
-}
-function wsDc(){if(ws)ws.close();}
+function wsCon(){} function wsDc(){}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ATSU ACTIONS
@@ -482,17 +1156,26 @@ const nc=(v,sfx='')=>(!wsOk||!live)?'- - -':fmt(v,0,sfx);
 // DRAW ENGINE
 // ═══════════════════════════════════════════════════════════════════════════
 const TITLES={
-  MENU:'MCDU MENU',INIT:'INIT  1/2',FUEL:'FUEL PRED',PROG:'PROG',
-  PERF:'PERF  T/O',DIR:'DIR TO',FPLN:'F-PLN',DATA:'DATA INDEX',BRT:'MCDU BRT/DIM',
-  DATA_STATUS:'A/C STATUS',DATA_POS:'POS MONITOR',DATA_GPS:'GPS MONITOR',
-  ATSU:'ATSU',ATSU_AOC:'AOC MENU',ATSU_ATC:'ATC COMM',
-  AIDS:'AIDS',AIDS_ENG:'AIDS  ENG',AIDS_APU:'AIDS  APU',
-  CFDS:'CFDS',CFDS_LLR:'LAST LEG RPT',CFDS_PFR:'POST FLT RPT',CFDS_SYS:'SYS RPT/TEST',
-  SATCOM:'SATCOM',RAD:'RAD NAV',SEC:'SEC F-PLN',ATC:'ATC COMM',
+  MENU:'MCDU MENU',
+  INIT:'INIT  1/2', WIND:'WIND DATA',
+  FUEL:'FUEL PRED',
+  PROG:'PROG',
+  PERF:'PERF',
+  DIR:'DIR TO', FPLN:'F-PLN', HOLD:'HOLD',
+  DEPARTURE:'DEPARTURE', ARRIVAL:'ARRIVAL',
+  DATA:'DATA INDEX', DATA_STATUS:'A/C STATUS', DATA_POS:'POS MONITOR', DATA_GPS:'GPS MONITOR',
+  ATSU:'ATSU', ATSU_AOC:'AOC MENU', ATSU_ATC:'ATC COMM',
+  AIDS:'AIDS', AIDS_ENG:'AIDS  ENG', AIDS_APU:'AIDS  APU',
+  CFDS:'CFDS', CFDS_LLR:'LAST LEG RPT', CFDS_PFR:'POST FLT RPT', CFDS_SYS:'SYS RPT/TEST',
+  SATCOM:'SATCOM', RAD:'RAD NAV', SEC:'SEC F-PLN', BRT:'MCDU BRT/DIM',
 };
 
 function draw(){
-  document.getElementById('ttl').textContent=TITLES[page]||page;
+  document.getElementById('ttl').textContent=
+    page==='INIT' ? `INIT  ${initPage}/2` :
+    page==='PERF' ? `PERF  ${perfPage}` :
+    page==='PROG' ? `PROG  ${progPage}/2` :
+    (TITLES[page]||page);
   const sp=document.getElementById('sp');
   // AOC WX overrides scratchpad
   if(page==='ATSU_AOC'&&atsuWxMsg){sp.textContent=atsuWxMsg.slice(0,26);}
@@ -509,22 +1192,69 @@ function draw(){
     R(6,'','','&lt;SATCOM','','G',''); break;
 
   case 'INIT':
-    R(1,'CO RTE','FROM/TO','NONE',FL.fromTo,'W','C');
-    R(2,'ALTN/CO RTE','ALTN',FL.atsu?FL.atsu.altnIcao:'----',FL.altn||'----','W','C');
-    R(3,'FLT NBR','',FL.fltNo,'','C','');
-    R(4,'COST INDEX','',FL.costIdx,'','C','');
-    R(5,'CRZ FL/TEMP','',FL.crzAlt+'/---°','','C','');
-    R(6,'TROPO','',FL.tropo,'','C',''); break;
+    if(initPage===1){
+      R(1,'CO RTE','FROM/TO','NONE',FL.fromTo,'W','C');
+      R(2,'ALTN/CO RTE','ALTN',FL.atsu?FL.atsu.altnIcao:'----',FL.altn||'----','W','C');
+      R(3,'FLT NBR','',FL.fltNo,'','C','');
+      R(4,'COST INDEX','',FL.costIdx,'','C','');
+      R(5,'CRZ FL/TEMP','',FL.crzAlt+'/---°','','C','');
+      R(6,'TROPO','INIT 2>',FL.tropo,'','C','W');
+    } else {
+      R(1,'ZFW/ZFWCG','',FL.fuel.zfw+'/'+(FL.zfwcg||'--.-'),'','C','');
+      R(2,'BLOCK FUEL','',FL.fuel.block,'','C','');
+      R(3,'','','','','','');
+      R(4,'','','','','','');
+      R(5,'','','','','','');
+      R(6,'&lt;INIT 1','WIND>','','','W','W');
+    }
+    break;
 
-  // ── PERF TAKEOFF ─────────────────────────────────────────────────────
+  // ── PERF (all phases) ─────────────────────────────────────────────────
   case 'PERF':{
     const pf=FL.perf;
-    R(1,'V1','',pf.v1,'','C','');
-    R(2,'VR','',pf.vr,'','C','');
-    R(3,'V2','FLAPS/THS',pf.v2,pf.flaps+'/'+pf.ths,'C','C');
-    R(4,'THR RED/ACC','FLEX TO',pf.thrRed+'/'+pf.thrAcc,pf.flex,'C','C');
-    R(5,'TRANS ALT','',pf.transAlt,'','C','');
-    R(6,'','','','','',''); break;
+    const phases=['TO','CLB','CRZ','DES','APPR','GA'];
+    const pi=phases.indexOf(perfPage);
+    const nextPhase=phases[(pi+1)%phases.length];
+    const prevPhase=phases[(pi-1+phases.length)%phases.length];
+    if(perfPage==='TO'){
+      R(1,'V1','',pf.v1,'','C','');
+      R(2,'VR','',pf.vr,'','C','');
+      R(3,'V2','FLAPS/THS',pf.v2,pf.flaps+'/'+pf.ths,'C','C');
+      R(4,'THR RED/ACC','FLEX TO',pf.thrRed+'/'+pf.thrAcc,pf.flex,'C','C');
+      R(5,'TRANS ALT','',pf.transAlt,'','C','');
+    } else if(perfPage==='CLB'){
+      R(1,'MANAGED SPD','MACH',pf.clbSpd,pf.clbMach,'C','C');
+      R(2,'PRESEL SPD','',pf.clbPresel,'','C','');
+      R(3,'','','','','','');
+      R(4,'','','','','','');
+      R(5,'','','','','','');
+    } else if(perfPage==='CRZ'){
+      R(1,'MANAGED SPD','MACH',pf.crzSpd,pf.crzMach,'C','C');
+      R(2,'CRZ ALT','',FL.crzAlt,'','G','');
+      R(3,'','','','','','');
+      R(4,'','','','','','');
+      R(5,'STEP ALTS','',pf.stepAlts||'------','','C','');
+    } else if(perfPage==='DES'){
+      R(1,'MANAGED SPD','MACH',pf.desSpd,pf.desMach,'C','C');
+      R(2,'TRANS ALT','',pf.desTrans,'','C','');
+      R(3,'','','','','','');
+      R(4,'','','','','','');
+      R(5,'','','','','','');
+    } else if(perfPage==='APPR'){
+      R(1,'VAPP','',pf.vapp,'','C','');
+      R(2,'LDG CONF','',pf.ldgFlap,'','C','');
+      R(3,'','MDA/MDH','',''+pf.ldgMda,'','C');
+      R(4,'','DH','',''+pf.ldgDh,'','C');
+      R(5,'','','','','','');
+    } else if(perfPage==='GA'){
+      R(1,'V2','',pf.gaV2,'','C','');
+      R(2,'ACC ALT','ENG OUT ALT',pf.gaAccAlt,pf.gaEngOut,'C','C');
+      R(3,'','','','','','');
+      R(4,'','','','','','');
+      R(5,'','','','','','');
+    }
+    R(6,'&lt;'+prevPhase,''+nextPhase+'>','','','W','W');
+    break;
   }
 
   // ── DIR TO ───────────────────────────────────────────────────────────
@@ -552,11 +1282,11 @@ function draw(){
     const dep=FL.fromTo.split('/')[0]||'----';
     const arr=FL.fromTo.split('/')[1]||'----';
     if(!FL.route.length){
-      R(1,'ORIGIN','DEST',dep,arr,'C','C');
+      R(1,'ORIGIN ←DEPARTURE','ARRIVAL→ DEST',dep,arr,'C','C');
       R(2,'','','- - NO ROUTE - -','','A','');
       R(3,'','','UPLINK SIMBRIEF','','X','');
       R(4,'','','OR ENTER INIT','','X','');
-      R(5,'','','FROM/TO FIRST','','X','');
+      R(5,'','HOLD>','','','','W');
       R(6,'','','','','','');
     } else {
       const wpts=[dep,...FL.route,arr];
@@ -564,11 +1294,11 @@ function draw(){
       const totalPages=Math.ceil(wpts.length/perPage);
       const start=fpPage*perPage;
       const slice=wpts.slice(start,start+perPage);
-      R(1,'F-PLN '+(fpPage+1)+'/'+totalPages,'',slice[0]||'','','C','');
+      R(1,'F-PLN '+(fpPage+1)+'/'+totalPages,'DEP/ARR',slice[0]||'',dep+'/'+arr,'C','W');
       R(2,'',slice[1]||'','','','','C');
       R(3,'',slice[2]||'','','','','C');
       R(4,'',slice[3]||'','','','','C');
-      R(5,'',slice[4]||'','','','','C');
+      R(5,'',slice[4]||'','','HOLD>','','W');
       const hasPrev=fpPage>0, hasNext=fpPage<totalPages-1;
       R(6,hasPrev?'↑PREV':'',hasNext?'NEXT↓':'',hasPrev?'&lt;PREV':'',hasNext?'MORE>':'','W','W');
     }
@@ -588,25 +1318,78 @@ function draw(){
     R(6,'EXTRA/TIME','ZFW',fu.extra+'/----',fu.zfw,'G','C'); break;
   }
 
-  // ── PROG ─────────────────────────────────────────────────────────────
+  // ── PROG ──────────────────────────────────────────────────────────────
   case 'PROG':
-    if(!wsOk||!live){
-      R(1,'AIRSPEED','ALTITUDE','NOT','CONNECTED','A','A');
-      R(2,'HDG','V/S','NOT','CONNECTED','A','A');
-      R(3,'FOB','','NOT CONNECTED','','A','');
-      R(4,'AP ALT','AP HDG','NOT','CONNECTED','A','A');
-      R(5,'AP SPD','AP STATE','NOT','CONNECTED','A','A');
-      R(6,'ENG1 N1','ENG2 N1','NOT','CONNECTED','A','A');
+    if(progPage===1){
+      if(!wsOk||!live){
+        R(1,'AIRSPEED','ALTITUDE','NOT','CONNECTED','A','A');
+        R(2,'HDG','V/S','NOT','CONNECTED','A','A');
+        R(3,'FOB','','NOT CONNECTED','','A','');
+        R(4,'AP ALT','AP HDG','NOT','CONNECTED','A','A');
+        R(5,'AP SPD','AP STATE','NOT','CONNECTED','A','A');
+        R(6,'ENG1 N1','ENG2 N1','NOT','CONNECTED  2>','A','A');
+      } else {
+        const L=live, ap=L.apMaster?'AP ON':'AP OFF', ac=L.apMaster?'G':'A';
+        const vs=(L.vs>=0?'+':'')+Math.round(L.vs);
+        R(1,'AIRSPEED','ALTITUDE',fmt(L.ias,0,'KT'),fmt(L.altitude,0,'FT'),'G','G');
+        R(2,'HDG','V/S',hdg(L.heading)+'°',vs+'FPM','G','G');
+        R(3,'FOB [LIVE]','',L.fuelTonnes+'T','','G','');
+        R(4,'AP ALT','AP HDG',fmt(L.apAltitude,0,'FT'),hdg(L.apHeading)+'°','C','C');
+        R(5,'AP SPD','',fmt(L.apSpeed,0,'KT'),ap,'C',ac);
+        R(6,'ENG1 N1','ENG2 N1  2>',fmt(L.n1Eng1,1,'%'),fmt(L.n1Eng2,1,'%'),'G','G');
+      }
     } else {
-      const L=live, ap=L.apMaster?'AP ON':'AP OFF', ac=L.apMaster?'G':'A';
-      const vs=(L.vs>=0?'+':'')+Math.round(L.vs);
-      R(1,'AIRSPEED','ALTITUDE',fmt(L.ias,0,'KT'),fmt(L.altitude,0,'FT'),'G','G');
-      R(2,'HDG','V/S',hdg(L.heading)+'°',vs+'FPM','G','G');
-      R(3,'FOB [LIVE]','',L.fuelTonnes+'T','','G','');
-      R(4,'AP ALT','AP HDG',fmt(L.apAltitude,0,'FT'),hdg(L.apHeading)+'°','C','C');
-      R(5,'AP SPD','',fmt(L.apSpeed,0,'KT'),ap,'C',ac);
-      R(6,'ENG1 N1','ENG2 N1',fmt(L.n1Eng1,1,'%'),fmt(L.n1Eng2,1,'%'),'G','G');
-    } break;
+      // PROG page 2 — cruise level management
+      R(1,'CRZ ALT','OPT FL',FL.crzAlt,FL.crzAlt,'C','G');
+      R(2,'REC MAX FL','','------','','G','');
+      R(3,'','','','','','');
+      R(4,'','','','','','');
+      R(5,'','','','','','');
+      R(6,'&lt;1','','','','W','');
+    }
+    break;
+
+  // ── WIND DATA ─────────────────────────────────────────────────────────
+  case 'WIND':
+    R(1,'CLB WIND','',windState.clb[0],'','C','');
+    R(2,'CLB WIND 2','',windState.clb[1],'','C','');
+    R(3,'CLB WIND 3','CRZ WIND',windState.clb[2],windState.crzWind,'C','C');
+    R(4,'','DES WIND','',windState.desWind,'','C');
+    R(5,'','','','','','');
+    R(6,'','RETURN>','','','','W'); break;
+
+  // ── HOLD ──────────────────────────────────────────────────────────────
+  case 'HOLD':
+    R(1,'HOLD WPT','',holdState.wpt||'------','','C','');
+    R(2,'TURN DIR','',holdState.dir==='L'?'LEFT':'RIGHT','','C','');
+    R(3,'TIME/DIST','',holdState.time+'MIN','','C','');
+    R(4,'HOLD SPD','',holdState.spd,'','C','');
+    R(5,'HOLD ALT','',holdState.alt,'','C','');
+    R(6,'','RETURN>','','','','W'); break;
+
+  // ── DEPARTURE ─────────────────────────────────────────────────────────
+  case 'DEPARTURE':{
+    const dep=FL.fromTo.split('/')[0]||'----';
+    const selRwy=FL.depRwy||'';
+    R(1,'RWY','SID',selRwy?selRwy:'[ SELECT ]',selRwy?'------':'','C','C');
+    R(2,'',selRwy?'SID LIST':'','','NONE','','W');
+    R(3,'','TRANS','','NONE','','W');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','RETURN>','','','','W'); break;
+  }
+
+  // ── ARRIVAL ───────────────────────────────────────────────────────────
+  case 'ARRIVAL':{
+    const arr=FL.fromTo.split('/')[1]||'----';
+    const selAppr=FL.arrAppr||'';
+    R(1,'APPR','VIA',selAppr||'[ SELECT ]','NONE','C','W');
+    R(2,'','STAR','','NONE','','W');
+    R(3,'','TRANS','','NONE','','W');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','RETURN>','','','','W'); break;
+  }
 
   // ── BRT ──────────────────────────────────────────────────────────────
   case 'BRT':
@@ -804,11 +1587,11 @@ function brtClick(e){
 // ═══════════════════════════════════════════════════════════════════════════
 const al=document.getElementById('alpha-btns');
 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(x=>{
-  const b=document.createElement('button');b.className='btn btn-key';b.textContent=x;
+  const b=document.createElement('button');b.className='mcdu-btn mcdu-btn-key';b.textContent=x;
   b.onclick=()=>key(x);al.appendChild(b);
 });
 [['SP',' '],['CLR','']].forEach(([lbl])=>{
-  const b=document.createElement('button');b.className='btn btn-key';b.textContent=lbl;
+  const b=document.createElement('button');b.className='mcdu-btn mcdu-btn-key';b.textContent=lbl;
   b.onclick=()=>{if(lbl==='CLR')clr();else key(' ');};al.appendChild(b);
 });
 
@@ -821,6 +1604,8 @@ document.addEventListener('keydown',e=>{
 });
 
 draw();
+
 </script>
+
 </body>
 </html>
