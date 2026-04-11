@@ -290,8 +290,6 @@ section{padding:100px 40px;max-width:1200px;margin:0 auto;}
 #bezel{background:#080808;display:grid;grid-template-columns:60px 1fr 60px;grid-template-rows:45px repeat(6,60px) 45px;padding:10px;border-radius:10px;}
 #screen-bg{grid-column:2;grid-row:1/span 8;background:#000;border:2px solid #333;height:100%;z-index:1;}
 #title{grid-column:2;grid-row:1;text-align:center;color:white;z-index:2;font-size:18px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'B612 Mono',monospace;}
-#live-dot{width:8px;height:8px;border-radius:50%;background:#333;flex-shrink:0;transition:background .3s;}
-#live-dot.on{background:var(--grn);box-shadow:0 0 6px var(--grn);}
 #scratchpad.err,#sp.err{color:var(--amb);}
 #scratchpad.ok,#sp.ok{color:white;}
 #sp{grid-column:2;grid-row:8;z-index:2;font-size:19px;padding:0 12px;display:flex;align-items:center;border-top:1px solid #222;min-height:45px;overflow:hidden;font-family:'B612 Mono',monospace;}
@@ -341,6 +339,7 @@ section{padding:100px 40px;max-width:1200px;margin:0 auto;}
 }
 .step:last-child::before{display:none;}
 
+
 /* ─── FOOTER ────────────────────────────────────────────────────────────── */
 footer{
   border-top:1px solid var(--border);
@@ -364,14 +363,43 @@ footer{
 .footer-note{font-size:12px;color:var(--text3);line-height:1.6;}
 
 /* ─── RESPONSIVE ────────────────────────────────────────────────────────── */
-@media(max-width:680px){
-  nav{padding:0 20px;gap:16px;}
+
+/* MCDU scale wrapper — JS applies transform:scale() directly */
+.mcdu-scale-wrap{
+  width:620px;
+  transform-origin:top center;
+  /* JS sets transform and marginBottom */
+}
+.mcdu-widget-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  flex-shrink:0;
+  overflow:visible;
+}
+
+@media(max-width:1100px){
+  .mcdu-section-inner{grid-template-columns:1fr;gap:48px;}
+  .mcdu-widget-wrap{margin:0 auto;}
+}
+
+@media(max-width:900px){
+  .hero-stats{gap:24px;flex-wrap:wrap;}
+  .stat-num{font-size:32px;}
+  nav{padding:0 20px;gap:12px;}
   .nav-links{display:none;}
-  .hero-stats{gap:30px;}
-  #mcdu{width:100%;max-width:420px;}
-  .mcdu-widget-wrap{width:100%;}
-  section,#features,#howto,#companion,#mcdu-section{padding:60px 20px;}
-  .mcdu-section-inner{gap:40px;}
+  section,#features,#howto,#mcdu-section{padding:64px 20px;}
+  .features-grid{grid-template-columns:1fr;}
+  .steps-grid{grid-template-columns:1fr 1fr;}
+  footer{padding:40px 20px;}
+}
+
+@media(max-width:600px){
+  .hero-stats{gap:16px;}
+  .stat{min-width:80px;}
+  .steps-grid{grid-template-columns:1fr;}
+  .step::before{display:none;}
+  nav{padding:0 16px;}
+  .nav-status{display:none;}
+  #mcdu-section{padding:48px 0;}
 }
 
 /* ─── SCROLL REVEAL ANIMATION ───────────────────────────────────────────── */
@@ -413,7 +441,7 @@ footer{
     <div class="stat"><div class="stat-num">30<span>+</span></div><div class="stat-label">Pages & Subpages</div></div>
     <div class="stat"><div class="stat-num">6</div><div class="stat-label">PERF Phases</div></div>
     <div class="stat"><div class="stat-num">100<span>%</span></div><div class="stat-label">Browser Based</div></div>
-    <div class="stat"><div class="stat-num">2</div><div class="stat-label">Sim Versions</div></div>
+    <div class="stat"><div class="stat-num"><span>∞</span></div><div class="stat-label">Any Device</div></div>
   </div>
 </section>
 
@@ -445,12 +473,6 @@ footer{
       <div class="feature-title">Flight Plan Management</div>
       <p class="feature-desc">Scrollable route from SimBrief uplink. DIR TO with waypoint selection. DEPARTURE and ARRIVAL subpages. HOLD page with full entry fields. F-PLN pagination.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">MAINTENANCE</div>
-      <div class="feature-title">ATSU, AIDS, CFDS</div>
-      <p class="feature-desc">Full ATSU AOC and ATC comms menu. AIDS engine and APU monitoring. CFDS last leg report, post flight report and system status. SATCOM status page.</p>
-    </div>
-  </div>
 </section>
 
 <!-- MCDU SECTION -->
@@ -477,23 +499,15 @@ footer{
           <span class="mfr-tag">ATSU</span>
           <span class="mfr-text"><strong>AOC datalink</strong> — press L1 on AOC MENU to uplink OFP direct from SimBrief. L2 fetches live METAR for your departure airport.</span>
         </div>
-        <div class="mcdu-feature-row">
-          <span class="mfr-tag">PROG</span>
-          <span class="mfr-text"><strong>Live flight data</strong> — shows live FOB, speeds, AP targets when PC companion is connected. Page 2 for cruise level management.</span>
-        </div>
-        <div class="mcdu-feature-row">
-          <span class="mfr-tag">BRT</span>
-          <span class="mfr-text"><strong>Brightness control</strong> — clickable bar or L4/L5 buttons to increase or decrease screen brightness.</span>
-        </div>
-      </div>
     </div>
 
     <!-- THE ACTUAL MCDU -->
     <div class="mcdu-widget-wrap">
+      <div class="mcdu-scale-wrap">
       <div id="mcdu">
         <div id="bezel">
           <div id="screen-bg"></div>
-          <div id="title"><span id="live-dot"></span><span id="ttl">MCDU MENU</span></div>
+          <div id="title"><span id="ttl">MCDU MENU</span></div>
           <button class="lsk" onclick="lsk('L1')" style="grid-row:2;grid-column:1;"></button>
           <div id="r1" class="dc" style="grid-row:2;"></div>
           <button class="lsk" onclick="lsk('R1')" style="grid-row:2;grid-column:3;"></button>
@@ -564,7 +578,8 @@ footer{
         </div>
         <div class="mpstat" id="sb-st">Enter your SimBrief username or numeric pilot ID</div>
       </div>
-    </div>
+      </div><!-- /mcdu-scale-wrap -->
+    </div><!-- /mcdu-widget-wrap -->
   </div>
 </div>
 
@@ -595,18 +610,9 @@ footer{
       <div class="step-title">Review F-PLN</div>
       <p class="step-desc">Press F-PLN to scroll through your SimBrief route waypoints. Access DEPARTURE for runway selection, ARRIVAL for approach type, and HOLD for a holding pattern.</p>
     </div>
-    <div class="step">
-      <div class="step-num">05</div>
-      <div class="step-title">Monitor via PROG</div>
-      <p class="step-desc">Use the PROG page during flight. With the PC companion app running on MSFS 2020/2024, it shows live FOB, speeds and autopilot targets in real time.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">06</div>
-      <div class="step-title">ATSU for weather</div>
-      <p class="step-desc">Go to ATSU → AOC MENU → WX REQUEST to fetch a live METAR for your departure airport direct from Aviation Weather.</p>
-    </div>
-  </div>
 </section>
+
+
 
 <!-- FOOTER -->
 <footer>
@@ -616,7 +622,6 @@ footer{
     <a href="#mcdu-section">MCDU</a>
     <a href="#features">Features</a>
     <a href="#howto">How To Use</a>
-    <a href="#companion">Companion App</a>
   </div>
   <p class="footer-note">For flight simulation use only. Not for real-world aviation.<br>Built with SimBrief API integration. MSFS 2020/2024 compatible.</p>
 </footer>
@@ -632,6 +637,38 @@ const observer = new IntersectionObserver(entries => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.1 });
 revealEls.forEach(el => observer.observe(el));
+
+// ─── MCDU SCALE ───────────────────────────────────────────────────────────
+// Keep MCDU at native 620px internally, scale it down to fit the screen.
+// The scale-wrap is 620px wide; we shrink its container accordingly.
+function scaleMCDU(){
+  const wrap = document.querySelector('.mcdu-scale-wrap');
+  const widget = document.querySelector('.mcdu-widget-wrap');
+  if(!wrap || !widget) return;
+
+  const NATIVE = 620;
+  const PADDING = 32; // min side padding total
+  const available = Math.min(window.innerWidth - PADDING, NATIVE);
+  const scale = available / NATIVE;
+
+  wrap.style.transform = `scale(${scale})`;
+  wrap.style.transformOrigin = 'top center';
+
+  // Measure actual rendered height after scale and adjust container
+  // Native height is approx 900px (MCDU + panel)
+  // After scale: rendered height = nativeHeight * scale
+  // We need to collapse the extra whitespace from transform not affecting layout
+  const nativeHeight = wrap.scrollHeight || 900;
+  const scaledHeight = nativeHeight * scale;
+  const margin = scaledHeight - nativeHeight;
+  wrap.style.marginBottom = margin + 'px';
+
+  // Shrink the outer widget wrapper to match scaled width
+  widget.style.width = (NATIVE * scale) + 'px';
+}
+
+scaleMCDU();
+window.addEventListener('resize', scaleMCDU);
 
 // ─── MCDU LOGIC ───────────────────────────────────────────────────────────
 // NOTE: btn class renamed to mcdu-btn in HTML to avoid conflicts with site CSS
@@ -679,8 +716,8 @@ let initPage=1;   // 1 or 2
 let holdState={ wpt:'', time:'---', spd:'---', dir:'L', alt:'---' };
 let windState={ clb:['---/---','---/---','---/---'], crzWind:'---/---', desWind:'---/---' };
 
-// live sim
-let live=null, ws=null, wsOk=false;
+// live sim removed
+const live=null, wsOk=false;
 
 // ATSU
 let atsuMsg='', atsuWxMsg='';
@@ -1057,11 +1094,8 @@ async function sbUplink(){
 // ═══════════════════════════════════════════════════════════════════════════
 // WEBSOCKET LIVE
 // ═══════════════════════════════════════════════════════════════════════════
-function setWsSt(m,c){/* live panel removed */}
 
-function wsToggle(){/* live panel removed */}
 
-function wsCon(){} function wsDc(){}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ATSU ACTIONS
@@ -1093,7 +1127,6 @@ async function atsuRequestWX(){
 // ═══════════════════════════════════════════════════════════════════════════
 function fmt(v,dp=0,sfx=''){return(v==null||v===undefined)?'---':Number(v).toFixed(dp)+sfx;}
 function hdg(v){return v==null?'---':String(Math.round(v)).padStart(3,'0');}
-const nc=(v,sfx='')=>(!wsOk||!live)?'- - -':fmt(v,0,sfx);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DRAW ENGINE
@@ -1251,9 +1284,9 @@ function draw(){
   // ── FUEL PRED ────────────────────────────────────────────────────────
   case 'FUEL':{
     const fu=FL.fuel;
-    const fob=(wsOk&&live)?live.fuelTonnes:fu.block;
-    const fc=(wsOk&&live)?'G':'C';
-    R(1,'FOB'+(wsOk?' [LIVE]':''),'GW/CG',fob,'---.-/--.-',fc,'G');
+    const fob=fu.block;
+    const fc='C';
+    R(1,'FOB','GW/CG',fu.block,'---.-/--.-','C','G');
     R(2,'DEST EFOB','TIME',fu.trip,'----','C','G');
     R(3,'ALTN EFOB','TIME',fu.altn,'----','C','G');
     R(4,'RTE RSV/%','',fu.rteRsv+'/'+fu.rsvPct,'','C','');
@@ -1264,7 +1297,7 @@ function draw(){
   // ── PROG ──────────────────────────────────────────────────────────────
   case 'PROG':
     if(progPage===1){
-      if(!wsOk||!live){
+      if(true){
         R(1,'AIRSPEED','ALTITUDE','NOT','CONNECTED','A','A');
         R(2,'HDG','V/S','NOT','CONNECTED','A','A');
         R(3,'FOB','','NOT CONNECTED','','A','');
@@ -1363,15 +1396,15 @@ function draw(){
 
   case 'DATA_POS':
     R(1,'FMGC 1','FMGC 2','---°N/---°E','---°N/---°E','C','C');
-    R(2,'MIX IRS','',wsOk&&live?fmt(live.altitude,0)+'FT ALT':'---°N/---°E','','G','');
+    R(2,'MIX IRS','','---°N/---°E','','G','');
     R(3,'IRS 1','IRS 2','NAV','NAV','G','G');
     R(4,'GPS 1','GPS 2','3D/NAV','3D/NAV','G','G');
     R(5,'','','','','','');
     R(6,'','','','RETURN>','','W'); break;
 
   case 'DATA_GPS':
-    R(1,'GPS 1','GPS 2',wsOk&&live?'3D NAV':'NO DATA',wsOk&&live?'3D NAV':'NO DATA',(wsOk&&live)?'G':'A',(wsOk&&live)?'G':'A');
-    R(2,'SATS USED','HDOP',wsOk&&live?'8':'--',wsOk&&live?'0.9':'--',(wsOk&&live)?'G':'A',(wsOk&&live)?'G':'A');
+    R(1,'GPS 1','GPS 2','NO DATA','NO DATA','A','A');
+    R(2,'SATS USED','HDOP','--','--','A','A');
     R(3,'','','','','','');
     R(4,'','','','','','');
     R(5,'','','','','','');
@@ -1410,9 +1443,287 @@ function draw(){
     R(6,'','','','RETURN>','','W'); break;
 
   case 'AIDS_ENG':{
-    const e1=(wsOk&&live)?fmt(live.n1Eng1,1,'%'):'---.-';
-    const e2=(wsOk&&live)?fmt(live.n1Eng2,1,'%'):'---.-';
-    const sc=(wsOk&&live)?'G':'A';
+    const e1='---.-';
+    const e2='---.-';
+    const sc='A';
+    R(1,'ENG 1 N1','ENG 2 N1',e1,e2,sc,sc);
+    R(2,'ENG 1 EGT','ENG 2 EGT','---°C','---°C',sc,sc);
+    R(3,'ENG 1 FF','ENG 2 FF','---KG/H','---KG/H',sc,sc);
+    R(4,'TOW','ZFW',FL.fuel.tow+'T',FL.fuel.zfw+'T','C','C');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+  }
+
+  case 'AIDS_APU':
+    R(1,'APU N1','','---.-','','A','');
+    R(2,'APU EGT','','---°C','','A','');
+    R(3,'APU FF','','---KG/H','','A','');
+    R(4,'APU HRS','','------','','C','');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+
+  // ── CFDS ─────────────────────────────────────────────────────────────
+  case 'CFDS':
+    R(1,'','','&lt;LAST LEG RPT','','G','');
+    R(2,'','','&lt;POST FLT RPT','','G','');
+    R(3,'','','&lt;SYS RPT/TEST','','G','');
+    R(4,'','','','','',''); R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+
+  case 'CFDS_LLR':{
+    const f=FL.fltNo!=='______'?FL.fltNo:'NO FLT NBR';
+    R(1,'FLT NBR','DATE',f,new Date().toISOString().slice(0,10),'W','W');
+    R(2,'SYSTEMS','','NO FAULTS','','G','');
+    R(3,'ECAM','','NO WARNINGS','','G','');
+    R(4,'CLASS 1','','NONE','','G','');
+    R(5,'CLASS 2','','NONE','','G','');
+    R(6,'','','','RETURN>','','W'); break;
+  }
+
+  case 'CFDS_PFR':{
+    const f=FL.fltNo!=='______'?FL.fltNo:'NO FLT NBR';
+    const rt=FL.fromTo!=='____/____'?FL.fromTo:'----/----';
+    R(1,'FLT NBR','ROUTE',f,rt,'W','W');
+    R(2,'BLOCK FUEL','',FL.fuel.block+'T','','C','');
+    R(3,'TRIP FUEL','',FL.fuel.trip+'T','','C','');
+    R(4,'ZFW','TOW',FL.fuel.zfw+'T',FL.fuel.tow+'T','C','C');
+    R(5,'STATUS','','NO FAULTS','','G','');
+    R(6,'','','','RETURN>','','W'); break;
+  }
+
+  case 'CFDS_SYS':
+    R(1,'','FWC','','NORMAL','','G');
+    R(2,'','FADEC1','','NORMAL','','G');
+    R(3,'','FADEC2','','NORMAL','','G');
+    R(4,'','FMGC1','','NORMAL','','G');
+    R(5,'','FMGC2','','NORMAL','','G');
+    R(6,'','','','RETURN>','','W'); break;
+
+  // ── SATCOM ───────────────────────────────────────────────────────────
+  case 'SATCOM':
+    R(1,'SATCOM STATUS','','STBY','','A','');
+    R(2,'CHANNEL','','------','','C','');
+    R(3,'GES ID','','------','','C','');
+    R(4,'SIGNAL','','------','','C','');
+    R(5,'DATALINK','','NOT AVAIL','','A','');
+    R(6,'','','','RETURN>','','W'); break;
+
+  // ── RAD NAV ──────────────────────────────────────────────────────────
+  case 'RAD':
+    R(1,'VOR1/FREQ','VOR2/FREQ','------','------','C','C');
+    R(2,'CRS','CRS','---°','---°','C','C');
+    R(3,'ILS/FREQ','','------','','C','');
+    R(4,'CRS','','---°','','C','');
+    R(5,'ADF1/FREQ','ADF2/FREQ','------','------','C','C');
+    R(6,'','','','','',''); break;
+
+  // ── SEC F-PLN ────────────────────────────────────────────────────────
+  case 'SEC':{
+    const hasSec=!!FL.secFromTo;
+    R(1,'SEC FROM/TO','',hasSec?FL.secFromTo:'----/----','','C','');
+    R(2,'SEC FLT NBR','',hasSec?(FL.secFltNo||'------'):'------','','C','');
+    R(3,'','','&lt;COPY ACTIVE*','','A','');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','','','','',''); break;
+  }
+
+  // ATC handled in go() — should never reach here
+  case 'ATC': page='ATSU_ATC'; draw(); return;
+
+  default:
+    for(let i=1;i<=6;i++) R(i,'','','','','','');
+    R(3,'','PAGE UNDER','','CONSTRUCTION','','A'); break;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ROW RENDERING
+// ═══════════════════════════════════════════════════════════════════════════
+function R(n,l1,l2,v1,v2,c1,c2){
+  document.getElementById('r'+n).innerHTML=
+    `<div class="lr"><span>${l1}</span><span>${l2}</span></div>`+
+    `<div class="vr"><span class="${c1}">${v1}</span><span class="${c2}">${v2}</span></div>`;
+}
+function setRowHTML(n,html){ document.getElementById('r'+n).innerHTML=html; }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BRT CLICK ON BAR
+// ═══════════════════════════════════════════════════════════════════════════
+function brtClick(e){
+  const bar=document.getElementById('brt-bar');
+  const rect=bar.getBoundingClientRect();
+  brt=Math.round(((e.clientX-rect.left)/rect.width)*100);
+  brt=Math.max(10,Math.min(100,brt));
+  applyBrt(); draw();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════════════════════════
+const al=document.getElementById('alpha-btns');
+'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(x=>{
+  const b=document.createElement('button');b.className='mcdu-btn mcdu-btn-key';b.textContent=x;
+  b.onclick=()=>key(x);al.appendChild(b);
+});
+[['SP',' '],['CLR','']].forEach(([lbl])=>{
+  const b=document.createElement('button');b.className='mcdu-btn mcdu-btn-key';b.textContent=lbl;
+  b.onclick=()=>{if(lbl==='CLR')clr();else key(' ');};al.appendChild(b);
+});
+
+// Physical keyboard support
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.key==='Backspace'){clr();e.preventDefault();}
+  else if(e.key==='Enter'){ /* no-op */ }
+  else if(/^[a-zA-Z0-9\/\.\+\-]$/.test(e.key)) key(e.key.toUpperCase());
+});
+
+draw();
+
+</script>
+
+</body>
+</html>  // ── PROG ──────────────────────────────────────────────────────────────
+  case 'PROG':
+    if(progPage===1){
+      R(1,'TRIP FUEL','BLOCK FUEL',FL.fuel.trip+'T',FL.fuel.block+'T','C','C');
+      R(2,'ZFW','TOW',FL.fuel.zfw+'T',FL.fuel.tow+'T','C','C');
+      R(3,'ALTN FUEL','RTE RSV',FL.fuel.altn+'T',FL.fuel.rteRsv+'T','C','C');
+      R(4,'FINAL','EXTRA',FL.fuel.final+'T',FL.fuel.extra+'T','C','G');
+      R(5,'TAXI','',FL.fuel.taxi+'T','','C','');
+      R(6,'','CRZ/OPT  2>','',FL.crzAlt,'','C');
+    } else {
+      R(1,'CRZ ALT','OPT FL',FL.crzAlt,FL.crzAlt,'C','G');
+      R(2,'REC MAX FL','','------','','G','');
+      R(3,'','','','','','');
+      R(4,'','','','','','');
+      R(5,'','','','','','');
+      R(6,'&lt;1','','','','W','');
+    }
+    break;
+
+  // ── WIND DATA ─────────────────────────────────────────────────────────
+  case 'WIND':
+    R(1,'CLB WIND','',windState.clb[0],'','C','');
+    R(2,'CLB WIND 2','',windState.clb[1],'','C','');
+    R(3,'CLB WIND 3','CRZ WIND',windState.clb[2],windState.crzWind,'C','C');
+    R(4,'','DES WIND','',windState.desWind,'','C');
+    R(5,'','','','','','');
+    R(6,'','RETURN>','','','','W'); break;
+
+  // ── HOLD ──────────────────────────────────────────────────────────────
+  case 'HOLD':
+    R(1,'HOLD WPT','',holdState.wpt||'------','','C','');
+    R(2,'TURN DIR','',holdState.dir==='L'?'LEFT':'RIGHT','','C','');
+    R(3,'TIME/DIST','',holdState.time+'MIN','','C','');
+    R(4,'HOLD SPD','',holdState.spd,'','C','');
+    R(5,'HOLD ALT','',holdState.alt,'','C','');
+    R(6,'','RETURN>','','','','W'); break;
+
+  // ── DEPARTURE ─────────────────────────────────────────────────────────
+  case 'DEPARTURE':{
+    const dep=FL.fromTo.split('/')[0]||'----';
+    const selRwy=FL.depRwy||'';
+    R(1,'RWY','SID',selRwy?selRwy:'[ SELECT ]',selRwy?'------':'','C','C');
+    R(2,'',selRwy?'SID LIST':'','','NONE','','W');
+    R(3,'','TRANS','','NONE','','W');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','RETURN>','','','','W'); break;
+  }
+
+  // ── ARRIVAL ───────────────────────────────────────────────────────────
+  case 'ARRIVAL':{
+    const arr=FL.fromTo.split('/')[1]||'----';
+    const selAppr=FL.arrAppr||'';
+    R(1,'APPR','VIA',selAppr||'[ SELECT ]','NONE','C','W');
+    R(2,'','STAR','','NONE','','W');
+    R(3,'','TRANS','','NONE','','W');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','RETURN>','','','','W'); break;
+  }
+
+  // ── BRT ──────────────────────────────────────────────────────────────
+  case 'BRT':
+    R(1,'','','BRIGHTNESS','','W','');
+    R(2,'','','','','','');
+    R(3,'','','','','','');
+    setRowHTML(3,`<div class="lr"></div><div class="vr" style="padding:4px 0"><div id="brt-bar" style="flex:1;height:14px;background:#333;border-radius:3px;cursor:pointer" onclick="brtClick(event)"><div id="brt-fill" style="height:100%;background:var(--grn);border-radius:3px;width:${brt}%"></div></div></div>`);
+    R(4,'INCREASE ▲','',brt+'%','','G','');
+    R(5,'DECREASE ▼','','','','A','');
+    R(6,'','','','','',''); break;
+
+  // ── DATA INDEX ───────────────────────────────────────────────────────
+  case 'DATA':
+    R(1,'','','&lt;A/C STATUS','','G','');
+    R(2,'','','&lt;POS MONITOR','','G','');
+    R(3,'','','&lt;GPS MONITOR','','G','');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+
+  case 'DATA_STATUS':
+    R(1,'ACFT TYPE','ENGINE',FL.aircraft,FL.engine,'C','C');
+    R(2,'FLT NBR','DATE',FL.fltNo,new Date().toISOString().slice(0,10),'C','W');
+    R(3,'NAV DB','','',FL.navdb,'','W');
+    R(4,'','','','','','');
+    R(5,'IDLE','ENG OUT','---','---','C','C');
+    R(6,'','','','RETURN>','','W'); break;
+
+  case 'DATA_POS':
+    R(1,'FMGC 1','FMGC 2','---°N/---°E','---°N/---°E','C','C');
+    R(2,'MIX IRS','','---°N/---°E','','G','');
+    R(3,'IRS 1','IRS 2','NAV','NAV','G','G');
+    R(4,'GPS 1','GPS 2','3D/NAV','3D/NAV','G','G');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+
+  case 'DATA_GPS':
+    R(1,'GPS 1','GPS 2','NO DATA','NO DATA','A','A');
+    R(2,'SATS USED','HDOP','--','--','A','A');
+    R(3,'','','','','','');
+    R(4,'','','','','','');
+    R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+
+  // ── ATSU ─────────────────────────────────────────────────────────────
+  case 'ATSU':
+    R(1,'','','&lt;AOC MENU','','G','');
+    R(2,'','','&lt;ATC COMM','','G','');
+    R(3,'','','','','',''); R(4,'','','','','',''); R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+
+  case 'ATSU_AOC':{
+    const loaded=!!FL.atsu;
+    R(1,'FLT NBR','OFP','&lt;INIT DATA REQ*',loaded?FL.fltNo:'------','A',loaded?'G':'A');
+    R(2,'','','&lt;WX REQUEST*','','G','');
+    R(3,'ROUTE','',loaded?FL.fromTo:'------/------','',loaded?'C':'A','');
+    R(4,'DEP','ARR',FL.atsu?FL.atsu.depTime:'----',FL.atsu?FL.atsu.arrTime:'----','C','C');
+    R(5,'ALTN','',FL.atsu?FL.atsu.altnIcao:'----','','C','');
+    R(6,atsuMsg||'','','','RETURN>','G','W'); break;
+  }
+
+  case 'ATSU_ATC':
+    R(1,'ACTIVE ATC','','--------','','A','');
+    R(2,'ATC 1','','--------','','C','');
+    R(3,'ATC 2','','--------','','C','');
+    R(4,'','','','','','');
+    R(5,'','DATALINK','','STBY','','A');
+    R(6,'','','','RETURN>','','W'); break;
+
+  // ── AIDS ─────────────────────────────────────────────────────────────
+  case 'AIDS':
+    R(1,'','','&lt;ENGINE REPORT','','G','');
+    R(2,'','','&lt;APU REPORT','','G','');
+    R(3,'','','','','',''); R(4,'','','','','',''); R(5,'','','','','','');
+    R(6,'','','','RETURN>','','W'); break;
+
+  case 'AIDS_ENG':{
+    const e1='---.-';
+    const e2='---.-';
+    const sc='A';
     R(1,'ENG 1 N1','ENG 2 N1',e1,e2,sc,sc);
     R(2,'ENG 1 EGT','ENG 2 EGT','---°C','---°C',sc,sc);
     R(3,'ENG 1 FF','ENG 2 FF','---KG/H','---KG/H',sc,sc);
